@@ -68,15 +68,30 @@ function isEmptyRowValues(v) {
 
 function validateWorkLogLike({ start_time, end_time, break_start, break_end }, prefixMsg = "") {
   if (!start_time || !end_time) return { ok: false, msg: `${prefixMsg}Seleziona ora inizio e fine.`.trim() };
-  if (toMinutes(end_time) <= toMinutes(start_time)) return { ok: false, msg: `${prefixMsg}L'ora fine deve essere dopo l'ora inizio.`.trim() };
+
+  const startMin = toMinutes(start_time);
+  const endMin = toMinutes(end_time);
+  // Calcola durata tenendo conto del passaggio mezzanotte (turni notturni)
+  let durationMin = endMin - startMin;
+  if (durationMin < 0) durationMin += 24 * 60;
+  if (durationMin === 0) return { ok: false, msg: `${prefixMsg}L'ora fine deve essere diversa dall'ora inizio.`.trim() };
+
   if ((break_start && !break_end) || (!break_start && break_end)) {
     return { ok: false, msg: `${prefixMsg}Se inserisci la pausa, compila sia inizio che fine pausa.`.trim() };
   }
   if (break_start && break_end) {
     const bs = toMinutes(break_start);
     const be = toMinutes(break_end);
-    if (!(bs >= toMinutes(start_time) && be <= toMinutes(end_time) && be > bs)) {
-      return { ok: false, msg: `${prefixMsg}La pausa deve essere dentro l'orario di lavoro e fine pausa > inizio pausa.`.trim() };
+    if (be <= bs) {
+      return { ok: false, msg: `${prefixMsg}La fine pausa deve essere dopo l'inizio pausa.`.trim() };
+    }
+    // Verifica che la pausa stia dentro l'orario di lavoro (anche per turni notturni)
+    let bsRel = bs - startMin;
+    let beRel = be - startMin;
+    if (bsRel < 0) bsRel += 24 * 60;
+    if (beRel < 0) beRel += 24 * 60;
+    if (bsRel >= durationMin || beRel > durationMin) {
+      return { ok: false, msg: `${prefixMsg}La pausa deve essere dentro l'orario di lavoro.`.trim() };
     }
   }
   return { ok: true, msg: "" };
@@ -104,7 +119,10 @@ function fmtMonthYearFile(ym) {
 function minutesBetween(start, end) {
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
-  return (eh * 60 + em) - (sh * 60 + sm);
+  let diff = (eh * 60 + em) - (sh * 60 + sm);
+  // Se il risultato è negativo, significa che si è passata la mezzanotte
+  if (diff < 0) diff += 24 * 60;
+  return diff;
 }
 
 function netMinutes(log) {
@@ -1831,21 +1849,16 @@ hoursForm?.addEventListener("submit", async (e) => {
         setMsg(`Compila tutti i campi obbligatori nella riga ${i + 1} (oppure rimuovila).`, "error");
         return;
       }
-      if (toMinutes(v.end_time) <= toMinutes(v.start_time)) {
-        setMsg(`Nella riga ${i + 1}: l'ora fine deve essere dopo l'ora inizio.`, "error");
+      // Validazione con supporto turni notturni: usa validateWorkLogLike che gestisce la mezzanotte
+      const rowValidation = validateWorkLogLike({
+        start_time: v.start_time,
+        end_time: v.end_time,
+        break_start: v.break_start,
+        break_end: v.break_end,
+      }, `Riga ${i + 1}: `);
+      if (!rowValidation.ok) {
+        setMsg(rowValidation.msg, "error");
         return;
-      }
-      if ((v.break_start && !v.break_end) || (!v.break_start && v.break_end)) {
-        setMsg(`Nella riga ${i + 1}: se inserisci la pausa, compila sia inizio che fine pausa.`, "error");
-        return;
-      }
-      if (v.break_start && v.break_end) {
-        const bs = toMinutes(v.break_start);
-        const be = toMinutes(v.break_end);
-        if (!(bs >= toMinutes(v.start_time) && be <= toMinutes(v.end_time) && be > bs)) {
-          setMsg(`Nella riga ${i + 1}: la pausa deve stare dentro l'orario di lavoro e fine pausa > inizio pausa.`, "error");
-          return;
-        }
       }
 
       payloads.push({
