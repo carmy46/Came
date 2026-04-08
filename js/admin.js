@@ -40,7 +40,10 @@ function timeToMinutes(t) {
 function minutesBetween(start, end) {
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
-  return (eh * 60 + em) - (sh * 60 + sm);
+  let diff = (eh * 60 + em) - (sh * 60 + sm);
+  // Gestione turni notturni a cavallo della mezzanotte
+  if (diff < 0) diff += 24 * 60;
+  return diff;
 }
 
 function netMinutes(log) {
