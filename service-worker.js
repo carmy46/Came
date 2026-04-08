@@ -1,4 +1,4 @@
-const CACHE_NAME = 'came-v3';
+const CACHE_NAME = 'came-v4';
 const STATIC_CACHE = [
   '/',
   '/index.html',
