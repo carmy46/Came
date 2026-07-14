@@ -142,6 +142,78 @@ function getDatalistValues(listId) {
     .filter(Boolean);
 }
 
+// ============================================================
+// CATALOGO: prodotti, luoghi e attività caricati dal database
+// (tabella catalog_items). Gestibili dall'admin senza toccare il codice.
+// ============================================================
+
+// Riempie un <datalist> (luoghi o attività) con i valori dal DB
+function fillDatalist(listId, values) {
+  const dl = document.getElementById(listId);
+  if (!dl) return;
+  dl.innerHTML = (values || [])
+    .map(v => `<option value="${escapeHtml(v)}"></option>`)
+    .join("");
+}
+
+// Rigenera le righe prodotto nel carrello, tenendo sempre la riga "Altro" in fondo
+function renderProductRows(products) {
+  const cart = document.getElementById("poCart");
+  if (!cart) return;
+  const otherRow = cart.querySelector('.product-row[data-po-item="Altro"]');
+
+  // rimuovi le righe prodotto esistenti (tranne "Altro")
+  cart.querySelectorAll(".product-row").forEach((row) => {
+    if (row !== otherRow) row.remove();
+  });
+
+  // crea le nuove righe prima di "Altro"
+  const frag = document.createDocumentFragment();
+  for (const name of (products || [])) {
+    const row = document.createElement("div");
+    row.className = "product-row";
+    row.setAttribute("data-po-item", name);
+    row.innerHTML =
+      `<div class="product-name">${escapeHtml(name)}</div>` +
+      `<input class="input product-qty" data-po-qty type="number" min="0" step="1" value="0" />`;
+    frag.appendChild(row);
+  }
+  if (otherRow) cart.insertBefore(frag, otherRow);
+  else cart.appendChild(frag);
+}
+
+// Carica il catalogo dal DB e aggiorna liste prodotti/luoghi/attività
+async function loadCatalog() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("catalog_items")
+      .select("type,name")
+      .eq("active", true)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("Errore caricamento catalogo:", error);
+      return;
+    }
+
+    const products = [];
+    const places = [];
+    const activities = [];
+    for (const it of (data || [])) {
+      if (it.type === "product") products.push(it.name);
+      else if (it.type === "place") places.push(it.name);
+      else if (it.type === "activity") activities.push(it.name);
+    }
+
+    renderProductRows(products);
+    fillDatalist("placesList", places);
+    fillDatalist("activitiesList", activities);
+  } catch (e) {
+    console.error("Errore imprevisto nel catalogo:", e);
+  }
+}
+
 function attachAutocomplete({ inputEl, listId, menuEl, onSelect }) {
   if (!inputEl || !menuEl) return;
   let values = null; // lazy
@@ -149,9 +221,9 @@ function attachAutocomplete({ inputEl, listId, menuEl, onSelect }) {
   let pd = null; // pointer tracking (per distinguere tap vs scroll)
 
   function ensureValues() {
-    if (values) return values;
-    values = getDatalistValues(listId);
-    return values;
+    // Rilegge sempre il datalist: così vede le voci caricate dal database
+    // (catalogo dinamico) anche se popolate dopo la creazione della riga.
+    return getDatalistValues(listId);
   }
 
   function hideMenu() {
@@ -443,6 +515,7 @@ logoutBtn.addEventListener("click", async () => {
 setActiveView("home");
 loadHomeSummary();
 initHoursFormUi();
+loadCatalog(); // carica prodotti/luoghi/attività dal database
 
 saveNameBtn?.addEventListener("click", async () => {
   const name = fullNameEl.value.trim();
@@ -541,6 +614,7 @@ document.querySelectorAll("[data-nav]").forEach(btn => {
     if (v === "archive") loadArchive();
     if (v === "requests") initRequestsUI();
     if (v === "products") initProductsUI();
+    if (v === "products" || v === "hours") loadCatalog();
   });
 });
 

@@ -30,6 +30,7 @@
       <button class="nav-btn active" data-view="hours" style="display:none;">Ore</button>
       <button class="nav-btn" data-view="requests" style="display:none;">Richieste</button>
       <button class="nav-btn" data-view="products">Prodotti</button>
+      <button class="nav-btn" data-view="catalog">Cataloghi</button>
 
       <!-- Dipendenti (spostato in sidebar per semplificare la pagina) -->
       <div id="adminEmployeesBar" class="card admin-employees-bar">
@@ -239,6 +240,38 @@
           <div style="text-align:right;">Consegna</div>
         </div>
         <div id="productsList">Caricamento...</div>
+      </div>
+
+      <div id="view-catalog" class="view">
+        <div class="view-head">
+          <h3>Gestisci cataloghi</h3>
+          <button class="btn small" type="button" data-admin-back>← Torna indietro</button>
+        </div>
+
+        <p class="muted" style="margin:0 0 12px;">
+          Aggiungi, rinomina, riordina o nascondi le voci che i dipendenti vedono
+          nei menu. Le modifiche valgono subito, senza bisogno di pubblicare.
+          Gli ordini e le ore già registrati non vengono toccati.
+        </p>
+
+        <div class="chips catalog-tabs">
+          <button class="chip active" type="button" data-catalog-tab="product">Prodotti</button>
+          <button class="chip" type="button" data-catalog-tab="place">Luoghi</button>
+          <button class="chip" type="button" data-catalog-tab="activity">Attività</button>
+        </div>
+
+        <div class="filters card" style="margin-top:12px;">
+          <div class="grid2" style="margin-top:0;">
+            <div>
+              <label class="label">Aggiungi una voce</label>
+              <input id="catalogNewName" class="input" type="text" placeholder="Es. nuovo prodotto..." />
+            </div>
+            <button id="catalogAddBtn" class="btn small" type="button">+ Aggiungi</button>
+          </div>
+          <p id="catalogMsg" class="msg"></p>
+        </div>
+
+        <div id="catalogList" style="margin-top:12px;">Caricamento...</div>
       </div>
     </section>
   </main>

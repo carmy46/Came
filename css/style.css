@@ -2792,3 +2792,23 @@ body.page-admin .inline-editor{
     background: rgba(255,255,255,.03);
   }
 }
+
+/* =====================================================================
+   Gestione cataloghi (admin) - layout righe
+   ===================================================================== */
+.catalog-tabs{ margin-top: 4px; }
+.catalog-item{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.catalog-item:last-child{ border-bottom: none; }
+.catalog-item-main{ flex: 1 1 220px; display: flex; align-items: center; }
+.catalog-item-main .catalog-name{ min-width: 160px; }
+.catalog-item-actions{ display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* icona del pulsante "Cataloghi" nella sidebar admin */
+body.page-admin .nav-btn[data-view="catalog"]{ --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M4 5h16v2H4V5Zm0 6h16v2H4v-2Zm0 6h16v2H4v-2Z'/%3E%3C/svg%3E"); }

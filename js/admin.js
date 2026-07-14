@@ -231,6 +231,7 @@ document.querySelectorAll(".nav-btn").forEach((btn) => {
     if (view === "hours") loadHours();
     if (view === "requests") loadRequests();
     if (view === "products") loadProducts();
+    if (view === "catalog") loadCatalogAdmin();
   });
 });
 
@@ -1787,6 +1788,176 @@ adminProdExportXlsxBtn?.addEventListener("click", () => {
     rows,
     summary: { title: `Riepilogo Prodotti ${monthLabel}`, rows: summaryRows }
   });
+});
+
+// ============================
+// CATALOGHI (admin): gestione prodotti / luoghi / attività
+// Tabella catalog_items. Solo l'admin può modificare (regole RLS).
+// ============================
+const catalogListEl = document.getElementById("catalogList");
+const catalogNewNameEl = document.getElementById("catalogNewName");
+const catalogAddBtn = document.getElementById("catalogAddBtn");
+const catalogMsgEl = document.getElementById("catalogMsg");
+
+let catalogCurrentType = "product"; // product | place | activity
+const CATALOG_LABEL = { product: "prodotto", place: "luogo", activity: "attività" };
+
+function setCatalogMsg(text, type = "info") {
+  if (!catalogMsgEl) return;
+  catalogMsgEl.textContent = text || "";
+  catalogMsgEl.className = `msg ${type}`;
+}
+
+// Carica e mostra le voci del tipo selezionato (incluse quelle nascoste)
+async function loadCatalogAdmin() {
+  if (!catalogListEl) return;
+  catalogListEl.textContent = "Caricamento...";
+  try {
+    const { data, error } = await supabaseClient
+      .from("catalog_items")
+      .select("id,name,active,sort_order")
+      .eq("type", catalogCurrentType)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      catalogListEl.textContent = "Errore nel caricamento del catalogo.";
+      return;
+    }
+    renderCatalogList(data || []);
+  } catch (e) {
+    console.error(e);
+    catalogListEl.textContent = "Errore imprevisto.";
+  }
+}
+
+function renderCatalogList(items) {
+  if (!items.length) {
+    catalogListEl.innerHTML = `<p class="muted">Nessuna voce. Aggiungine una qui sopra.</p>`;
+    return;
+  }
+  catalogListEl.innerHTML = items.map((it, idx) => `
+    <div class="catalog-item">
+      <div class="catalog-item-main">
+        <input class="input catalog-name" data-id="${it.id}" value="${escapeHtml(it.name)}" />
+        ${it.active ? "" : `<span class="pill" style="margin-left:8px;">nascosto</span>`}
+      </div>
+      <div class="catalog-item-actions">
+        <button class="btn small" data-cat-move="up" data-id="${it.id}" ${idx === 0 ? "disabled" : ""} title="Sposta su">↑</button>
+        <button class="btn small" data-cat-move="down" data-id="${it.id}" ${idx === items.length - 1 ? "disabled" : ""} title="Sposta giù">↓</button>
+        <button class="btn small" data-cat-rename="${it.id}">Salva nome</button>
+        <button class="btn small" data-cat-toggle="${it.id}" data-active="${it.active}">${it.active ? "Nascondi" : "Mostra"}</button>
+        <button class="btn small danger" data-cat-delete="${it.id}">Elimina</button>
+      </div>
+    </div>
+  `).join("");
+  bindCatalogActions(items);
+}
+
+function bindCatalogActions(items) {
+  // Salva nome (rinomina)
+  catalogListEl.querySelectorAll("[data-cat-rename]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-cat-rename");
+      const input = catalogListEl.querySelector(`.catalog-name[data-id="${id}"]`);
+      const name = (input?.value || "").trim();
+      if (!name) { setCatalogMsg("Il nome non può essere vuoto.", "error"); return; }
+      const { error } = await supabaseClient.from("catalog_items").update({ name }).eq("id", id);
+      if (error) {
+        if (error.code === "23505") setCatalogMsg("Esiste già una voce con questo nome.", "error");
+        else { console.error(error); setCatalogMsg("Errore nel salvataggio.", "error"); }
+        return;
+      }
+      setCatalogMsg("Nome salvato ✅", "ok");
+      await loadCatalogAdmin();
+    });
+  });
+
+  // Mostra / Nascondi
+  catalogListEl.querySelectorAll("[data-cat-toggle]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-cat-toggle");
+      const active = btn.getAttribute("data-active") === "true";
+      const { error } = await supabaseClient.from("catalog_items").update({ active: !active }).eq("id", id);
+      if (error) { console.error(error); setCatalogMsg("Errore.", "error"); return; }
+      await loadCatalogAdmin();
+    });
+  });
+
+  // Elimina
+  catalogListEl.querySelectorAll("[data-cat-delete]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-cat-delete");
+      if (!confirm("Eliminare questa voce dal catalogo?\nGli ordini e le ore già registrati NON vengono toccati.")) return;
+      const { error } = await supabaseClient.from("catalog_items").delete().eq("id", id);
+      if (error) { console.error(error); setCatalogMsg("Errore nell'eliminazione.", "error"); return; }
+      setCatalogMsg("Voce eliminata ✅", "ok");
+      await loadCatalogAdmin();
+    });
+  });
+
+  // Sposta su / giù (scambia l'ordine con la voce vicina)
+  catalogListEl.querySelectorAll("[data-cat-move]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-id");
+      const dir = btn.getAttribute("data-cat-move");
+      const idx = items.findIndex((x) => String(x.id) === String(id));
+      if (idx < 0) return;
+      const swapIdx = dir === "up" ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= items.length) return;
+
+      const a = items[idx];
+      const b = items[swapIdx];
+      const { error: e1 } = await supabaseClient.from("catalog_items").update({ sort_order: b.sort_order }).eq("id", a.id);
+      const { error: e2 } = await supabaseClient.from("catalog_items").update({ sort_order: a.sort_order }).eq("id", b.id);
+      if (e1 || e2) { console.error(e1 || e2); setCatalogMsg("Errore nel riordino.", "error"); return; }
+      await loadCatalogAdmin();
+    });
+  });
+}
+
+// Cambia scheda (Prodotti / Luoghi / Attività)
+document.querySelectorAll("[data-catalog-tab]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    catalogCurrentType = btn.getAttribute("data-catalog-tab") || "product";
+    document.querySelectorAll("[data-catalog-tab]").forEach((b) => b.classList.toggle("active", b === btn));
+    setCatalogMsg("");
+    loadCatalogAdmin();
+  });
+});
+
+// Aggiungi nuova voce
+catalogAddBtn?.addEventListener("click", async () => {
+  const name = (catalogNewNameEl?.value || "").trim();
+  if (!name) { setCatalogMsg(`Scrivi il nome del ${CATALOG_LABEL[catalogCurrentType]}.`, "error"); return; }
+  try {
+    // metti la nuova voce in fondo: sort_order = (massimo attuale) + 10
+    const { data: maxRow } = await supabaseClient
+      .from("catalog_items")
+      .select("sort_order")
+      .eq("type", catalogCurrentType)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const nextOrder = ((maxRow?.sort_order) || 0) + 10;
+
+    const { error } = await supabaseClient
+      .from("catalog_items")
+      .insert({ type: catalogCurrentType, name, sort_order: nextOrder });
+
+    if (error) {
+      if (error.code === "23505") setCatalogMsg("Esiste già una voce con questo nome.", "error");
+      else { console.error(error); setCatalogMsg("Errore nell'aggiunta.", "error"); }
+      return;
+    }
+    if (catalogNewNameEl) catalogNewNameEl.value = "";
+    setCatalogMsg("Voce aggiunta ✅", "ok");
+    await loadCatalogAdmin();
+  } catch (e) {
+    console.error(e);
+    setCatalogMsg("Errore imprevisto.", "error");
+  }
 });
 
 
