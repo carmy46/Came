@@ -2177,7 +2177,11 @@ body.modal-open{
    del file. Prossimo blocco: Prodotti + Admin.
    ===================================================================== */
 
-:root{
+/* La palette chiara "Blu ardesia" vale SOLO per Login e Dipendente.
+   L'Admin resta col suo tema scuro originale (:root in cima al file)
+   finché non viene rifatto nel blocco dedicato. */
+body.auth-page,
+body.page-employee{
   --bg: #f4f6f9;
   --card: #ffffff;
   --text: #1e2a37;
