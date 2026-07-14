@@ -2171,477 +2171,302 @@ body.modal-open{
 }
 
 /* =====================================================================
-   RESTYLE "TIMBRO" — blocco 1: palette globale + Login + Home + Ore (dipendente)
-   Stessa logica di sempre (righe ora inizio/fine per luogo, correzione in
-   archivio): qui si cambia solo l'aspetto. Override in fondo come il resto
-   del file. Prossimo blocco: Prodotti + Admin.
+   RESTYLE "AURORA GLASS" - blocco 1: Login + Home + Ore (dipendente)
+   Tema scuro con luci neon (aurora), vetro smerigliato (glassmorphism),
+   gradiente viola-ciano. Font: Space Grotesk (titoli/numeri) + Public Sans.
+   L'app era gia scura: qui si rimappano colori/accenti, si aggiunge il
+   vetro, i font e lo sfondo aurora. Override in fondo, come il resto del
+   file. Prossimo blocco: Admin.
    ===================================================================== */
 
-/* La palette chiara "Blu ardesia" vale SOLO per Login e Dipendente.
-   L'Admin resta col suo tema scuro originale (:root in cima al file)
-   finché non viene rifatto nel blocco dedicato. */
+/* --- variabili tema (solo Login + Dipendente) --- */
 body.auth-page,
 body.page-employee{
-  --bg: #f4f6f9;
-  --card: #ffffff;
-  --text: #1e2a37;
-  --muted: #63717f;
-  --primary: #2f6fb0;
-  --border: rgba(30,42,55,.12);
+  --grad: linear-gradient(120deg, #9a5cf0, #52c2e0);
+  --glass: rgba(255,255,255,.055);
+  --glass-2: rgba(255,255,255,.09);
+  --gb: rgba(255,255,255,.13);
+  --accent2: #5fc9e8;
+  --amber: #e6b84d;
+  --ink-3: #8a8799;
+
+  /* variabili native dell'app rimappate su Aurora */
+  --bg: #0e0b1a;
+  --card: rgba(255,255,255,.055);
+  --text: #f5f4f8;
+  --muted: #bfbccb;
+  --primary: #a374f0;
+  --border: rgba(255,255,255,.13);
+  --danger: #f0776f;
+  --ok: #5fc9e8;
+  --warn: #e6b84d;
   --radius: 16px;
-  --danger: #cf4033;
-  --ok: #2f9e6b;
-  --warn: #e0912a;
 }
 
-/* --- LOGIN --- */
-body.auth-page{
-  background: radial-gradient(1100px 650px at 20% 0%, rgba(178,58,46,.08), transparent 60%), var(--bg);
+/* --- font (il selettore * dell'app va vinto elemento per elemento) --- */
+body.auth-page, body.auth-page *,
+body.page-employee, body.page-employee *{
+  font-family: 'Public Sans', system-ui, -apple-system, Segoe UI, sans-serif;
 }
+body.auth-page h1,
+body.page-employee h1,
+body.page-employee h2,
+body.page-employee h3,
+body.page-employee .topbar h2,
+body.page-employee .home-card-title,
+body.page-employee .statValue,
+body.page-employee .home-metric strong{
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  letter-spacing: -.3px;
+}
+body.page-employee input[type="time"]{
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* --- sfondo aurora --- */
+body.auth-page,
+body.page-employee{
+  background:
+    radial-gradient(120% 85% at 12% -5%, rgba(150,86,236,.50), transparent 55%),
+    radial-gradient(110% 75% at 105% 15%, rgba(70,178,224,.42), transparent 52%),
+    radial-gradient(95% 95% at 85% 108%, rgba(214,78,168,.40), transparent 55%),
+    #0e0b1a;
+  color: var(--text);
+}
+
+/* =========================== LOGIN =========================== */
 body.auth-page .auth-card{
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 0 rgba(36,49,63,.04), 0 20px 50px rgba(36,49,63,.10);
-  backdrop-filter: none;
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--gb);
+  box-shadow: 0 34px 74px -26px rgba(8,4,26,.75);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  body.auth-page .auth-card{ background: rgba(30,20,60,.6); }
 }
 body.auth-page h1{
-  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
-  text-transform:uppercase; letter-spacing:-.01em;
+  font-size: 42px;
+  letter-spacing: -1px;
+  background: linear-gradient(120deg, #ffffff, #c9a8f5);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+body.auth-page .muted{ color: var(--muted); }
+body.auth-page .label{
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  font-size: 11px;
+  font-weight: 700;
 }
 body.auth-page .input{
-  background: var(--bg);
-  border-color: var(--border);
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
   color: var(--text);
 }
 body.auth-page .input:focus{
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(47,111,176,.15);
+  box-shadow: 0 0 0 4px rgba(163,116,240,.28);
 }
+body.auth-page ::placeholder{ color: var(--ink-3); }
 body.auth-page .auth-card .btn{
-  background: var(--primary);
-  color:#fff;
-  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
-  text-transform:uppercase; letter-spacing:.03em; font-size:14px;
+  background: var(--grad);
+  border: none;
+  color: #fff;
+  border-radius: 999px;
+  font-weight: 700;
+  box-shadow: 0 16px 34px -10px rgba(150,86,236,.65);
 }
+body.auth-page .auth-card .btn:hover{ filter: brightness(1.08); }
+body.auth-page .msg.error{ color: var(--danger); }
 
-/* --- TOPBAR + PULSANTI (dipendente) --- */
-body.page-employee{
-  background: var(--bg);
-}
+/* =========================== DIPENDENTE =========================== */
+body.page-employee{ color: var(--text); }
+
+/* topbar */
 body.page-employee .topbar{
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
+  background: rgba(14,11,26,.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gb);
 }
-body.page-employee .topbar h2{
-  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
-  letter-spacing:.02em;
-}
+body.page-employee .topbar h2{ color: var(--text); }
+body.page-employee .topbar-sub{ color: var(--muted); }
 body.page-employee .btn{
-  border-color: var(--border);
-  background: var(--card);
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
   color: var(--text);
 }
+body.page-employee .btn:hover{ border-color: var(--primary); }
 body.page-employee .btn.primary{
-  background: var(--primary);
-  border-color: var(--primary);
+  background: var(--grad);
+  border: none;
   color: #fff;
 }
 
-/* --- HOME (schede Ore/Richieste/Prodotti/Archivio) --- */
-body.page-employee .home-card{
-  border-color: var(--border);
-  background: var(--card);
-  box-shadow: 0 1px 0 rgba(36,49,63,.03), 0 8px 24px rgba(36,49,63,.05);
-}
-body.page-employee .home-card-title{
-  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
-  text-transform:uppercase; font-size:13px; letter-spacing:.02em;
-}
-body.page-employee .home-card-line{ background: var(--border); }
-body.page-employee .home-icon{
-  border-color: var(--border);
-  background: #e8f0f9;
-  color: var(--primary);
-}
-body.page-employee .home-metric strong{
-  font-family:"Consolas","IBM Plex Mono",ui-monospace,monospace;
-  font-variant-numeric: tabular-nums;
-}
-body.page-employee .home-card-cta{
-  border-color: var(--border);
-  background: #eef2f7;
-  color: var(--text);
-}
-
-/* --- FORM ORE (righe luogo/attività/orario, stessa logica di oggi) --- */
-body.page-employee .form-card{
-  background: var(--card);
-  border-color: var(--border);
-  box-shadow: 0 1px 0 rgba(36,49,63,.03), 0 8px 24px rgba(36,49,63,.05);
-}
-body.page-employee label{
-  font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; font-weight:700;
-}
+/* placeholder + input generici */
+body.page-employee ::placeholder{ color: var(--ink-3); }
 body.page-employee .input,
 body.page-employee input,
 body.page-employee select{
-  background: var(--bg);
-  border-color: var(--border);
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
   color: var(--text);
 }
 body.page-employee input:focus,
 body.page-employee select:focus{
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(47,111,176,.15);
+  box-shadow: 0 0 0 4px rgba(163,116,240,.28);
 }
-body.page-employee input[type="time"]{
-  font-family:"Consolas","IBM Plex Mono",ui-monospace,monospace;
-  font-weight:700; text-align:center; font-variant-numeric: tabular-nums;
+body.page-employee label,
+body.page-employee .label{
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: 10.5px;
+  font-weight: 700;
 }
 
+/* HOME cards (vetro) */
+body.page-employee .home-card{
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--gb);
+  box-shadow: 0 30px 60px -26px rgba(8,4,26,.7);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  body.page-employee .home-card{ background: rgba(30,20,60,.55); }
+}
+body.page-employee .home-card-title{ color: var(--text); text-transform: uppercase; letter-spacing:.06em; }
+body.page-employee .home-card-line{ background: var(--gb); }
+body.page-employee .home-icon{
+  border: 1px solid var(--gb);
+  background: linear-gradient(135deg, rgba(150,86,236,.30), rgba(70,178,224,.25));
+  color: #dcc8f7;
+}
+body.page-employee .home-metric strong{ color: var(--text); }
+body.page-employee .home-metric .muted{ color: var(--muted); }
+body.page-employee .home-card-cta{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+body.page-employee .chev{ color: var(--accent2); }
+
+/* FORM ORE (vetro) */
+body.page-employee .form-card{
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--gb);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  body.page-employee .form-card{ background: rgba(30,20,60,.55); }
+}
 body.page-employee .hours-row{
-  border: 1px solid var(--border);
-  background: var(--card);
-  border-radius: 14px;
-  box-shadow: 0 1px 0 rgba(36,49,63,.03);
+  background: var(--glass);
+  border: 1px solid var(--gb);
 }
 body.page-employee .hours-row-title{
-  font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color: var(--muted);
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  font-size: 11px;
 }
 body.page-employee .btn.danger{
-  border-color: var(--danger);
+  border: none;
   background: transparent;
   color: var(--danger);
-  border-radius: 20px;
-  font-size:12px;
-  padding: 6px 12px;
 }
-body.page-employee #addHoursRowBtn,
-body.page-employee #clearHoursRowsBtn{
-  border: 1.5px dashed var(--border);
+body.page-employee .btn.danger:hover{ background: rgba(240,119,111,.16); }
+body.page-employee #addHoursRowBtn{
+  border: 1.5px dashed var(--gb);
   background: transparent;
   color: var(--muted);
 }
-body.page-employee #sendBtn{
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
-  text-transform:uppercase; letter-spacing:.03em;
-  width:100%;
-  margin-top:14px;
+body.page-employee #clearHoursRowsBtn{
+  border: 1px solid var(--gb);
+  background: var(--glass);
+  color: var(--muted);
 }
+body.page-employee #sendBtn{
+  background: var(--grad);
+  border: none;
+  color: #fff;
+  border-radius: 999px;
+  font-weight: 700;
+  width: 100%;
+  margin-top: 14px;
+  box-shadow: 0 16px 34px -10px rgba(150,86,236,.65);
+}
+body.page-employee #sendBtn:hover{ filter: brightness(1.08); }
 
+/* autocomplete menu */
 body.page-employee .auto-menu{
-  border-color: var(--border);
-  background: var(--card);
-  box-shadow: 0 18px 50px rgba(36,49,63,.15);
+  background: rgba(20,14,38,.96);
+  border: 1px solid var(--gb);
+  box-shadow: 0 18px 50px rgba(8,4,26,.6);
 }
 body.page-employee .auto-item{
-  border-color: var(--border);
-  background: var(--bg);
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
   color: var(--text);
 }
 
-body.page-employee .msg.ok{ color: var(--ok); }
+/* pill / stati */
+body.page-employee .pill{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+body.page-employee .pill.ok{
+  background: rgba(95,201,232,.16);
+  border-color: rgba(95,201,232,.35);
+  color: var(--accent2);
+}
+
+/* messaggi + toast */
+body.page-employee .msg.ok{ color: var(--accent2); }
 body.page-employee .msg.error{ color: var(--danger); }
-
 body.page-employee .toast{
-  background: var(--card);
-  border-color: var(--border);
+  background: rgba(20,14,38,.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--gb);
   color: var(--text);
-  box-shadow: 0 18px 50px rgba(36,49,63,.18);
+  box-shadow: 0 18px 50px rgba(8,4,26,.55);
 }
-body.page-employee .toast.ok{ border-color: rgba(47,158,107,.4); }
-body.page-employee .toast.error{ border-color: rgba(207,64,51,.4); }
+body.page-employee .toast.ok{ border-color: rgba(95,201,232,.4); }
+body.page-employee .toast.error{ border-color: rgba(240,119,111,.4); }
 
-/* =====================================================================
-   RESTYLE "TIMBRO" — blocco 2: ADMIN in tema chiaro "Blu ardesia"
-   Ridefinisce in un solo posto tutti i colori scuri della dashboard admin,
-   così è coordinata con Login/Dipendente. Nessuna modifica a HTML/JS: solo
-   aspetto. Per tornare al tema scuro basta rimuovere questo blocco.
-   ===================================================================== */
-
-body.page-admin{
-  /* palette base chiara */
-  --bg: #eef1f5;
-  --card: #ffffff;
-  --text: #1e2a37;
-  --muted: #63717f;
-  --primary: #2f6fb0;
-  --border: rgba(30,42,55,.12);
-  --danger: #cf4033;
-  --ok: #2f9e6b;
-  --warn: #e0912a;
-
-  /* variabili specifiche admin ridefinite in chiaro */
-  --admin-panel: #ffffff;
-  --admin-panel2: #ffffff;
-  --admin-stroke: rgba(30,42,55,.12);
-  --admin-stroke2: rgba(30,42,55,.18);
-  --admin-shadow: 0 20px 55px rgba(30,42,55,.12);
-  --admin-shadow-soft: 0 10px 30px rgba(30,42,55,.08);
-  --admin-focus: 0 0 0 4px rgba(47,111,176,.18);
-
-  /* superfici secondarie / righe */
-  --a-soft: #f4f6f9;
-  --a-soft2: #eef2f7;
-
+/* archivio: contenitori in vetro scuro (accenti viola invece che blu) */
+body.page-employee #view-archive .archive-shell{
   background:
-    radial-gradient(1100px 620px at 18% 0%, rgba(47,111,176,.06), transparent 60%),
-    var(--bg);
+    radial-gradient(800px 320px at 10% 0%, rgba(150,86,236,.14), transparent 60%),
+    radial-gradient(700px 320px at 95% 10%, rgba(70,178,224,.12), transparent 60%),
+    rgba(20,14,38,.6);
+  border: 1px solid var(--gb);
 }
-
-/* --- topbar --- */
-body.page-admin .topbar{
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: none;
+body.page-employee #view-archive .archive-section-head{
+  background: linear-gradient(180deg, rgba(20,14,38,.9), rgba(20,14,38,.75));
+  border: 1px solid var(--gb);
 }
-body.page-admin .topbar h2{
-  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
-  letter-spacing:.02em;
-}
-body.page-admin .topbar-sub{ color: var(--muted); }
-body.page-admin .topbar-actions .btn.small{
-  background: var(--card);
-  border-color: var(--border);
+body.page-employee .statPill,
+body.page-employee .archive-card,
+body.page-employee .month-toggle,
+body.page-employee .archive-filters-toggle > summary{
+  background: var(--glass);
+  border: 1px solid var(--gb);
   color: var(--text);
 }
-body.page-admin .topbar-actions .btn.small:hover{ background: var(--a-soft); }
-
-/* --- sidebar --- */
-body.page-admin .sidebar{
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: var(--admin-shadow-soft);
-}
-body.page-admin .sidebar-title{ color: var(--muted); }
-body.page-admin .nav-btn{
-  background: var(--a-soft);
-  border: 1px solid var(--border);
+body.page-employee .chip{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
   color: var(--text);
 }
-body.page-admin .nav-btn:hover{ background: var(--a-soft2); }
-body.page-admin .nav-btn.active{
-  background: rgba(47,111,176,.10);
-  border-color: rgba(47,111,176,.38);
-}
-body.page-admin .nav-btn.active::before{
-  background: linear-gradient(180deg, #2f6fb0, #5a97d6);
-}
-body.page-admin .sidebar .admin-employees-bar{
-  background: var(--a-soft);
-  border: 1px solid var(--border);
-}
-
-/* --- contenuto (pannello gestionale) --- */
-body.page-admin .content{
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: var(--admin-shadow);
-}
-body.page-admin .content h3{
-  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
-  letter-spacing:.01em;
-}
-
-/* --- pulsanti generici admin (Apri Prodotti, Export, Torna indietro...) --- */
-body.page-admin .btn{
-  background: var(--card);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-body.page-admin .btn:hover{ background: var(--a-soft); }
-
-/* --- card / filtri / input --- */
-body.page-admin .card{
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 0 rgba(30,42,55,.03), 0 8px 22px rgba(30,42,55,.05);
-  backdrop-filter: none;
-}
-body.page-admin .filters.card{
-  background: var(--a-soft);
-  border-color: var(--border);
-  box-shadow: none;
-}
-body.page-admin input,
-body.page-admin select,
-body.page-admin .input{
-  background: var(--card);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-body.page-admin input:focus,
-body.page-admin select:focus,
-body.page-admin .input:focus{
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(47,111,176,.15);
-}
-body.page-admin label,
-body.page-admin .label{ color: var(--muted); }
-
-/* --- filtri richiudibili --- */
-body.page-admin .admin-filters-toggle > summary{
-  background: var(--a-soft);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-body.page-admin .admin-filters-toggle[open] > summary{
-  background: var(--a-soft2);
-  border-color: var(--border);
-}
-
-/* --- statistiche --- */
-body.page-admin .stat{
-  background: var(--a-soft);
-  border: 1px solid var(--border);
-}
-body.page-admin .statValue{ color: var(--text); }
-body.page-admin .dayTotal{ color: var(--primary); }
-
-/* --- chip dipendenti --- */
-body.page-admin .chip{
-  background: var(--a-soft);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-body.page-admin .chip.active{
-  background: rgba(47,111,176,.12);
-  border-color: rgba(47,111,176,.40);
-}
-
-/* --- card giorno / righe --- */
-body.page-admin .dayCard{
-  background: var(--card);
-  border: 1px solid var(--border);
-}
-body.page-admin .dayCard:hover{
-  background: var(--a-soft);
-  border-color: var(--admin-stroke2);
-}
-body.page-admin .dayHeader{ border-bottom: 1px solid var(--border); }
-body.page-admin .rowItem{
-  background: var(--a-soft);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-
-/* --- pill / stati --- */
-body.page-admin .pill{
-  background: var(--a-soft);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-body.page-admin .pill.ok{
-  background: rgba(47,158,107,.14);
-  border-color: rgba(47,158,107,.4);
-  color: var(--ok);
-}
-
-/* --- bottoni azione --- */
-body.page-admin [data-req-action="approve"],
-body.page-admin [data-po-delivery-save]{
-  border-color: rgba(47,111,176,.45);
-  background: rgba(47,111,176,.12);
-  color: var(--primary);
-}
-body.page-admin [data-req-action="reject"]{
-  border-color: rgba(207,64,51,.4) !important;
-  background: rgba(207,64,51,.10);
-  color: var(--danger);
-}
-body.page-admin [data-po-delivery-today]{
-  border-color: var(--border);
-  background: var(--a-soft);
-  color: var(--text);
-}
-
-/* --- modale scheda dipendente --- */
-body.page-admin .modal-card{
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: var(--admin-shadow);
-}
-body.page-admin .modal-head .muted{ color: var(--muted); }
-body.page-admin .tab{
-  background: var(--a-soft);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-body.page-admin .tab.active{
-  background: rgba(47,111,176,.12);
-  border-color: rgba(47,111,176,.40);
-}
-body.page-admin .inline-editor{
-  background: var(--a-soft);
-  border: 1px solid var(--border);
-}
-
-/* --- tabelle desktop --- */
-@media (min-width: 980px){
-  body.page-admin .admin-table-head{
-    background: var(--a-soft2);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    backdrop-filter: none;
-    box-shadow: none;
-  }
-  body.page-admin #view-hours .dayHeader{ background: var(--a-soft); }
-
-  body.page-admin #view-hours .rowItem,
-  body.page-admin #empHoursList .rowItem,
-  body.page-admin #empRequestsList .rowItem,
-  body.page-admin #view-requests .rowItem,
-  body.page-admin #view-products .rowItem{
-    border-top: 1px solid var(--border);
-    background: var(--card);
-  }
-  body.page-admin #view-hours .rowItem:nth-child(2n),
-  body.page-admin #empHoursList .rowItem:nth-child(2n),
-  body.page-admin #empRequestsList .rowItem:nth-child(2n){
-    background: var(--a-soft);
-  }
-  body.page-admin #view-hours .rowItem:hover,
-  body.page-admin #empHoursList .rowItem:hover,
-  body.page-admin #empRequestsList .rowItem:hover{
-    background: var(--a-soft2);
-  }
-  body.page-admin #view-hours .rowItem > div:nth-child(2),
-  body.page-admin #empHoursList .rowItem > div:nth-child(2){
-    color: var(--muted);
-  }
-  body.page-admin #view-hours .rowItem > div:nth-child(3),
-  body.page-admin #empHoursList .rowItem > div:nth-child(3){
-    color: var(--primary);
-  }
-  body.page-admin #view-hours .rowItem .muted,
-  body.page-admin #empHoursList .rowItem .muted,
-  body.page-admin #view-hours details.empCard > summary.dayHeader .muted{
-    color: var(--muted);
-  }
-
-  /* righe "gruppo data" */
-  body.page-admin #view-hours .rowItem.rowGroup,
-  body.page-admin #empHoursList .rowItem.rowGroup,
-  body.page-admin #empRequestsList .rowItem.rowGroup,
-  body.page-admin #view-requests .rowItem.rowGroup,
-  body.page-admin #view-products .rowItem.rowGroup{
-    background: var(--a-soft2);
-    border-top-color: var(--border);
-  }
-  /* totale giorno evidenziato (era ambra su scuro) */
-  body.page-admin #view-hours .rowItem.rowGroup > div:nth-child(3),
-  body.page-admin #empHoursList .rowItem.rowGroup > div:nth-child(3){
-    border: 1px solid rgba(224,145,42,.4);
-    background: rgba(224,145,42,.14);
-    color: #b9741c;
-  }
-
-  body.page-admin #empHoursList .emp-hours-table,
-  body.page-admin #empRequestsList .emp-req-table{
-    border: 1px solid var(--border);
-    background: var(--card);
-  }
+body.page-employee .chip.active{
+  background: rgba(163,116,240,.18);
+  border-color: rgba(163,116,240,.45);
 }
