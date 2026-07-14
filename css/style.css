@@ -2178,16 +2178,16 @@ body.modal-open{
    ===================================================================== */
 
 :root{
-  --bg: #f3ede0;
-  --card: #fffdf8;
-  --text: #24313f;
-  --muted: #6b6252;
-  --primary: #b23a2e;
-  --border: rgba(36,49,63,.16);
+  --bg: #f4f6f9;
+  --card: #ffffff;
+  --text: #1e2a37;
+  --muted: #63717f;
+  --primary: #2f6fb0;
+  --border: rgba(30,42,55,.12);
   --radius: 16px;
-  --danger: #b23a2e;
-  --ok: #3c6e51;
-  --warn: #d99a2b;
+  --danger: #cf4033;
+  --ok: #2f9e6b;
+  --warn: #e0912a;
 }
 
 /* --- LOGIN --- */
@@ -2211,7 +2211,7 @@ body.auth-page .input{
 }
 body.auth-page .input:focus{
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(178,58,46,.15);
+  box-shadow: 0 0 0 3px rgba(47,111,176,.15);
 }
 body.auth-page .auth-card .btn{
   background: var(--primary);
@@ -2256,7 +2256,7 @@ body.page-employee .home-card-title{
 body.page-employee .home-card-line{ background: var(--border); }
 body.page-employee .home-icon{
   border-color: var(--border);
-  background: #efe6d2;
+  background: #e8f0f9;
   color: var(--primary);
 }
 body.page-employee .home-metric strong{
@@ -2265,7 +2265,7 @@ body.page-employee .home-metric strong{
 }
 body.page-employee .home-card-cta{
   border-color: var(--border);
-  background: #efe6d2;
+  background: #eef2f7;
   color: var(--text);
 }
 
@@ -2288,7 +2288,7 @@ body.page-employee select{
 body.page-employee input:focus,
 body.page-employee select:focus{
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(178,58,46,.15);
+  box-shadow: 0 0 0 3px rgba(47,111,176,.15);
 }
 body.page-employee input[type="time"]{
   font-family:"Consolas","IBM Plex Mono",ui-monospace,monospace;
@@ -2305,9 +2305,9 @@ body.page-employee .hours-row-title{
   font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color: var(--muted);
 }
 body.page-employee .btn.danger{
-  border-color: var(--primary);
+  border-color: var(--danger);
   background: transparent;
-  color: var(--primary);
+  color: var(--danger);
   border-radius: 20px;
   font-size:12px;
   padding: 6px 12px;
@@ -2340,7 +2340,7 @@ body.page-employee .auto-item{
 }
 
 body.page-employee .msg.ok{ color: var(--ok); }
-body.page-employee .msg.error{ color: var(--primary); }
+body.page-employee .msg.error{ color: var(--danger); }
 
 body.page-employee .toast{
   background: var(--card);
@@ -2348,5 +2348,5 @@ body.page-employee .toast{
   color: var(--text);
   box-shadow: 0 18px 50px rgba(36,49,63,.18);
 }
-body.page-employee .toast.ok{ border-color: rgba(60,110,81,.4); }
-body.page-employee .toast.error{ border-color: rgba(178,58,46,.4); }
+body.page-employee .toast.ok{ border-color: rgba(47,158,107,.4); }
+body.page-employee .toast.error{ border-color: rgba(207,64,51,.4); }
