@@ -2470,3 +2470,325 @@ body.page-employee .chip.active{
   background: rgba(163,116,240,.18);
   border-color: rgba(163,116,240,.45);
 }
+
+/* =====================================================================
+   RESTYLE "AURORA GLASS" - blocco 2: ADMIN
+   Dashboard admin coordinata: sfondo aurora, vetro, gradiente viola-ciano,
+   font Space Grotesk + Public Sans. L'app admin era gia scura: qui si
+   rimappano variabili e accenti (blu -> viola/ciano) e si aggiunge il vetro.
+   ===================================================================== */
+
+body.page-admin{
+  --grad: linear-gradient(120deg, #9a5cf0, #52c2e0);
+  --glass: rgba(255,255,255,.055);
+  --glass-2: rgba(255,255,255,.09);
+  --gb: rgba(255,255,255,.13);
+  --accent2: #5fc9e8;
+  --amber: #e6b84d;
+  --ink-3: #8a8799;
+
+  --bg: #0e0b1a;
+  --card: rgba(255,255,255,.055);
+  --text: #f5f4f8;
+  --muted: #bfbccb;
+  --primary: #a374f0;
+  --border: rgba(255,255,255,.13);
+  --danger: #f0776f;
+  --ok: #5fc9e8;
+  --warn: #e6b84d;
+
+  --admin-panel: rgba(255,255,255,.055);
+  --admin-panel2: rgba(255,255,255,.028);
+  --admin-stroke: rgba(255,255,255,.13);
+  --admin-stroke2: rgba(255,255,255,.18);
+  --admin-shadow: 0 34px 74px -26px rgba(8,4,26,.7);
+  --admin-shadow-soft: 0 18px 60px -22px rgba(8,4,26,.5);
+  --admin-focus: 0 0 0 4px rgba(163,116,240,.22);
+
+  --a-soft: rgba(255,255,255,.05);
+  --a-soft2: rgba(255,255,255,.085);
+
+  background:
+    radial-gradient(120% 70% at 15% -5%, rgba(150,86,236,.40), transparent 55%),
+    radial-gradient(100% 70% at 100% 10%, rgba(70,178,224,.32), transparent 55%),
+    radial-gradient(90% 90% at 88% 108%, rgba(214,78,168,.30), transparent 55%),
+    #0e0b1a;
+}
+
+/* font */
+body.page-admin, body.page-admin *{
+  font-family: 'Public Sans', system-ui, -apple-system, Segoe UI, sans-serif;
+}
+body.page-admin h1,
+body.page-admin h2,
+body.page-admin h3,
+body.page-admin .topbar h2,
+body.page-admin .content h3,
+body.page-admin .statValue,
+body.page-admin .dayTotal{
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  letter-spacing: -.3px;
+}
+body.page-admin ::placeholder{ color: var(--ink-3); }
+
+/* topbar */
+body.page-admin .topbar{
+  background: rgba(14,11,26,.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gb);
+}
+body.page-admin .topbar-sub{ color: var(--muted); }
+body.page-admin .topbar-actions .btn.small{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+body.page-admin .topbar-actions .btn.small:hover{ border-color: var(--primary); }
+
+/* sidebar (vetro) */
+body.page-admin .sidebar{
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--gb);
+  box-shadow: var(--admin-shadow-soft);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  body.page-admin .sidebar{ background: rgba(30,20,60,.55); }
+}
+body.page-admin .sidebar-title{ color: var(--muted); }
+body.page-admin .nav-btn{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+body.page-admin .nav-btn:hover{ background: rgba(255,255,255,.12); }
+body.page-admin .nav-btn.active{
+  background: rgba(163,116,240,.16);
+  border-color: rgba(163,116,240,.4);
+}
+body.page-admin .nav-btn.active::before{
+  background: linear-gradient(180deg, #9a5cf0, #52c2e0);
+}
+body.page-admin .sidebar .admin-employees-bar{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+}
+
+/* contenuto (grande pannello vetro) */
+body.page-admin .content{
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--gb);
+  box-shadow: var(--admin-shadow);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  body.page-admin .content{ background: rgba(30,20,60,.55); }
+}
+body.page-admin .content h3{ color: var(--text); }
+
+/* pulsanti generici */
+body.page-admin .btn{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+body.page-admin .btn:hover{ border-color: var(--primary); }
+
+/* card / filtri / input */
+body.page-admin .card{
+  background: var(--glass);
+  border: 1px solid var(--gb);
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+body.page-admin .filters.card{
+  background: var(--glass-2);
+  border-color: var(--gb);
+}
+body.page-admin input,
+body.page-admin select,
+body.page-admin .input{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+body.page-admin input:focus,
+body.page-admin select:focus,
+body.page-admin .input:focus{
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(163,116,240,.28);
+}
+body.page-admin label,
+body.page-admin .label{ color: var(--muted); }
+
+/* filtri richiudibili */
+body.page-admin .admin-filters-toggle > summary{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+body.page-admin .admin-filters-toggle[open] > summary{
+  background: rgba(255,255,255,.12);
+  border-color: var(--gb);
+}
+
+/* statistiche */
+body.page-admin .stat{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+}
+body.page-admin .statValue{ color: var(--text); }
+body.page-admin .dayTotal{ color: var(--accent2); }
+
+/* chip dipendenti */
+body.page-admin .chip{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+body.page-admin .chip.active{
+  background: rgba(163,116,240,.18);
+  border-color: rgba(163,116,240,.45);
+}
+
+/* card giorno / righe */
+body.page-admin .dayCard{
+  background: var(--glass);
+  border: 1px solid var(--gb);
+}
+body.page-admin .dayCard:hover{
+  background: rgba(255,255,255,.08);
+  border-color: var(--admin-stroke2);
+}
+body.page-admin .dayHeader{ border-bottom: 1px solid var(--gb); }
+body.page-admin .rowItem{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+
+/* pill / stati */
+body.page-admin .pill{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+body.page-admin .pill.ok{
+  background: rgba(95,201,232,.16);
+  border-color: rgba(95,201,232,.4);
+  color: var(--accent2);
+}
+
+/* bottoni azione */
+body.page-admin [data-req-action="approve"],
+body.page-admin [data-po-delivery-save]{
+  border-color: rgba(163,116,240,.5);
+  background: rgba(163,116,240,.16);
+  color: #cbb4f5;
+}
+body.page-admin [data-req-action="reject"]{
+  border-color: rgba(240,119,111,.4) !important;
+  background: rgba(240,119,111,.12);
+  color: var(--danger);
+}
+body.page-admin [data-po-delivery-today]{
+  border-color: var(--gb);
+  background: var(--glass-2);
+  color: var(--text);
+}
+
+/* modale scheda dipendente */
+body.page-admin .modal-card{
+  background: rgba(20,14,38,.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--gb);
+  box-shadow: var(--admin-shadow);
+}
+body.page-admin .modal-head .muted{ color: var(--muted); }
+body.page-admin .tab{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+  color: var(--text);
+}
+body.page-admin .tab.active{
+  background: rgba(163,116,240,.18);
+  border-color: rgba(163,116,240,.45);
+}
+body.page-admin .inline-editor{
+  background: var(--glass-2);
+  border: 1px solid var(--gb);
+}
+@media (max-width: 980px){
+  .modal.as-page .modal-card{ background: rgba(16,11,26,.98); }
+}
+
+/* tabelle desktop */
+@media (min-width: 980px){
+  body.page-admin .admin-table-head{
+    background: rgba(255,255,255,.08);
+    border: 1px solid var(--gb);
+    color: var(--muted);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: none;
+  }
+  body.page-admin #view-hours .dayHeader{ background: rgba(255,255,255,.04); }
+
+  body.page-admin #view-hours .rowItem,
+  body.page-admin #empHoursList .rowItem,
+  body.page-admin #empRequestsList .rowItem,
+  body.page-admin #view-requests .rowItem,
+  body.page-admin #view-products .rowItem{
+    border-top: 1px solid var(--gb);
+    background: rgba(255,255,255,.03);
+  }
+  body.page-admin #view-hours .rowItem:nth-child(2n),
+  body.page-admin #empHoursList .rowItem:nth-child(2n),
+  body.page-admin #empRequestsList .rowItem:nth-child(2n){
+    background: rgba(255,255,255,.055);
+  }
+  body.page-admin #view-hours .rowItem:hover,
+  body.page-admin #empHoursList .rowItem:hover,
+  body.page-admin #empRequestsList .rowItem:hover{
+    background: rgba(255,255,255,.09);
+  }
+  body.page-admin #view-hours .rowItem > div:nth-child(2),
+  body.page-admin #empHoursList .rowItem > div:nth-child(2){
+    color: var(--muted);
+  }
+  body.page-admin #view-hours .rowItem > div:nth-child(3),
+  body.page-admin #empHoursList .rowItem > div:nth-child(3){
+    color: var(--accent2);
+  }
+  body.page-admin #view-hours .rowItem .muted,
+  body.page-admin #empHoursList .rowItem .muted,
+  body.page-admin #view-hours details.empCard > summary.dayHeader .muted{
+    color: var(--muted);
+  }
+
+  body.page-admin #view-hours .rowItem.rowGroup,
+  body.page-admin #empHoursList .rowItem.rowGroup,
+  body.page-admin #empRequestsList .rowItem.rowGroup,
+  body.page-admin #view-requests .rowItem.rowGroup,
+  body.page-admin #view-products .rowItem.rowGroup{
+    background: rgba(255,255,255,.075);
+    border-top-color: var(--gb);
+  }
+  body.page-admin #view-hours .rowItem.rowGroup > div:nth-child(3),
+  body.page-admin #empHoursList .rowItem.rowGroup > div:nth-child(3){
+    border: 1px solid rgba(230,184,77,.4);
+    background: rgba(230,184,77,.14);
+    color: var(--amber);
+  }
+
+  body.page-admin #empHoursList .emp-hours-table,
+  body.page-admin #empRequestsList .emp-req-table{
+    border: 1px solid var(--gb);
+    background: rgba(255,255,255,.03);
+  }
+}
