@@ -2354,3 +2354,294 @@ body.page-employee .toast{
 }
 body.page-employee .toast.ok{ border-color: rgba(47,158,107,.4); }
 body.page-employee .toast.error{ border-color: rgba(207,64,51,.4); }
+
+/* =====================================================================
+   RESTYLE "TIMBRO" — blocco 2: ADMIN in tema chiaro "Blu ardesia"
+   Ridefinisce in un solo posto tutti i colori scuri della dashboard admin,
+   così è coordinata con Login/Dipendente. Nessuna modifica a HTML/JS: solo
+   aspetto. Per tornare al tema scuro basta rimuovere questo blocco.
+   ===================================================================== */
+
+body.page-admin{
+  /* palette base chiara */
+  --bg: #eef1f5;
+  --card: #ffffff;
+  --text: #1e2a37;
+  --muted: #63717f;
+  --primary: #2f6fb0;
+  --border: rgba(30,42,55,.12);
+  --danger: #cf4033;
+  --ok: #2f9e6b;
+  --warn: #e0912a;
+
+  /* variabili specifiche admin ridefinite in chiaro */
+  --admin-panel: #ffffff;
+  --admin-panel2: #ffffff;
+  --admin-stroke: rgba(30,42,55,.12);
+  --admin-stroke2: rgba(30,42,55,.18);
+  --admin-shadow: 0 20px 55px rgba(30,42,55,.12);
+  --admin-shadow-soft: 0 10px 30px rgba(30,42,55,.08);
+  --admin-focus: 0 0 0 4px rgba(47,111,176,.18);
+
+  /* superfici secondarie / righe */
+  --a-soft: #f4f6f9;
+  --a-soft2: #eef2f7;
+
+  background:
+    radial-gradient(1100px 620px at 18% 0%, rgba(47,111,176,.06), transparent 60%),
+    var(--bg);
+}
+
+/* --- topbar --- */
+body.page-admin .topbar{
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: none;
+}
+body.page-admin .topbar h2{
+  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
+  letter-spacing:.02em;
+}
+body.page-admin .topbar-sub{ color: var(--muted); }
+body.page-admin .topbar-actions .btn.small{
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
+}
+body.page-admin .topbar-actions .btn.small:hover{ background: var(--a-soft); }
+
+/* --- sidebar --- */
+body.page-admin .sidebar{
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--admin-shadow-soft);
+}
+body.page-admin .sidebar-title{ color: var(--muted); }
+body.page-admin .nav-btn{
+  background: var(--a-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+body.page-admin .nav-btn:hover{ background: var(--a-soft2); }
+body.page-admin .nav-btn.active{
+  background: rgba(47,111,176,.10);
+  border-color: rgba(47,111,176,.38);
+}
+body.page-admin .nav-btn.active::before{
+  background: linear-gradient(180deg, #2f6fb0, #5a97d6);
+}
+body.page-admin .sidebar .admin-employees-bar{
+  background: var(--a-soft);
+  border: 1px solid var(--border);
+}
+
+/* --- contenuto (pannello gestionale) --- */
+body.page-admin .content{
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--admin-shadow);
+}
+body.page-admin .content h3{
+  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
+  letter-spacing:.01em;
+}
+
+/* --- pulsanti generici admin (Apri Prodotti, Export, Torna indietro...) --- */
+body.page-admin .btn{
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+body.page-admin .btn:hover{ background: var(--a-soft); }
+
+/* --- card / filtri / input --- */
+body.page-admin .card{
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(30,42,55,.03), 0 8px 22px rgba(30,42,55,.05);
+  backdrop-filter: none;
+}
+body.page-admin .filters.card{
+  background: var(--a-soft);
+  border-color: var(--border);
+  box-shadow: none;
+}
+body.page-admin input,
+body.page-admin select,
+body.page-admin .input{
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+body.page-admin input:focus,
+body.page-admin select:focus,
+body.page-admin .input:focus{
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(47,111,176,.15);
+}
+body.page-admin label,
+body.page-admin .label{ color: var(--muted); }
+
+/* --- filtri richiudibili --- */
+body.page-admin .admin-filters-toggle > summary{
+  background: var(--a-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+body.page-admin .admin-filters-toggle[open] > summary{
+  background: var(--a-soft2);
+  border-color: var(--border);
+}
+
+/* --- statistiche --- */
+body.page-admin .stat{
+  background: var(--a-soft);
+  border: 1px solid var(--border);
+}
+body.page-admin .statValue{ color: var(--text); }
+body.page-admin .dayTotal{ color: var(--primary); }
+
+/* --- chip dipendenti --- */
+body.page-admin .chip{
+  background: var(--a-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+body.page-admin .chip.active{
+  background: rgba(47,111,176,.12);
+  border-color: rgba(47,111,176,.40);
+}
+
+/* --- card giorno / righe --- */
+body.page-admin .dayCard{
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+body.page-admin .dayCard:hover{
+  background: var(--a-soft);
+  border-color: var(--admin-stroke2);
+}
+body.page-admin .dayHeader{ border-bottom: 1px solid var(--border); }
+body.page-admin .rowItem{
+  background: var(--a-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+/* --- pill / stati --- */
+body.page-admin .pill{
+  background: var(--a-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+body.page-admin .pill.ok{
+  background: rgba(47,158,107,.14);
+  border-color: rgba(47,158,107,.4);
+  color: var(--ok);
+}
+
+/* --- bottoni azione --- */
+body.page-admin [data-req-action="approve"],
+body.page-admin [data-po-delivery-save]{
+  border-color: rgba(47,111,176,.45);
+  background: rgba(47,111,176,.12);
+  color: var(--primary);
+}
+body.page-admin [data-req-action="reject"]{
+  border-color: rgba(207,64,51,.4) !important;
+  background: rgba(207,64,51,.10);
+  color: var(--danger);
+}
+body.page-admin [data-po-delivery-today]{
+  border-color: var(--border);
+  background: var(--a-soft);
+  color: var(--text);
+}
+
+/* --- modale scheda dipendente --- */
+body.page-admin .modal-card{
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--admin-shadow);
+}
+body.page-admin .modal-head .muted{ color: var(--muted); }
+body.page-admin .tab{
+  background: var(--a-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+body.page-admin .tab.active{
+  background: rgba(47,111,176,.12);
+  border-color: rgba(47,111,176,.40);
+}
+body.page-admin .inline-editor{
+  background: var(--a-soft);
+  border: 1px solid var(--border);
+}
+
+/* --- tabelle desktop --- */
+@media (min-width: 980px){
+  body.page-admin .admin-table-head{
+    background: var(--a-soft2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+  body.page-admin #view-hours .dayHeader{ background: var(--a-soft); }
+
+  body.page-admin #view-hours .rowItem,
+  body.page-admin #empHoursList .rowItem,
+  body.page-admin #empRequestsList .rowItem,
+  body.page-admin #view-requests .rowItem,
+  body.page-admin #view-products .rowItem{
+    border-top: 1px solid var(--border);
+    background: var(--card);
+  }
+  body.page-admin #view-hours .rowItem:nth-child(2n),
+  body.page-admin #empHoursList .rowItem:nth-child(2n),
+  body.page-admin #empRequestsList .rowItem:nth-child(2n){
+    background: var(--a-soft);
+  }
+  body.page-admin #view-hours .rowItem:hover,
+  body.page-admin #empHoursList .rowItem:hover,
+  body.page-admin #empRequestsList .rowItem:hover{
+    background: var(--a-soft2);
+  }
+  body.page-admin #view-hours .rowItem > div:nth-child(2),
+  body.page-admin #empHoursList .rowItem > div:nth-child(2){
+    color: var(--muted);
+  }
+  body.page-admin #view-hours .rowItem > div:nth-child(3),
+  body.page-admin #empHoursList .rowItem > div:nth-child(3){
+    color: var(--primary);
+  }
+  body.page-admin #view-hours .rowItem .muted,
+  body.page-admin #empHoursList .rowItem .muted,
+  body.page-admin #view-hours details.empCard > summary.dayHeader .muted{
+    color: var(--muted);
+  }
+
+  /* righe "gruppo data" */
+  body.page-admin #view-hours .rowItem.rowGroup,
+  body.page-admin #empHoursList .rowItem.rowGroup,
+  body.page-admin #empRequestsList .rowItem.rowGroup,
+  body.page-admin #view-requests .rowItem.rowGroup,
+  body.page-admin #view-products .rowItem.rowGroup{
+    background: var(--a-soft2);
+    border-top-color: var(--border);
+  }
+  /* totale giorno evidenziato (era ambra su scuro) */
+  body.page-admin #view-hours .rowItem.rowGroup > div:nth-child(3),
+  body.page-admin #empHoursList .rowItem.rowGroup > div:nth-child(3){
+    border: 1px solid rgba(224,145,42,.4);
+    background: rgba(224,145,42,.14);
+    color: #b9741c;
+  }
+
+  body.page-admin #empHoursList .emp-hours-table,
+  body.page-admin #empRequestsList .emp-req-table{
+    border: 1px solid var(--border);
+    background: var(--card);
+  }
+}
