@@ -2169,3 +2169,184 @@ body.modal-open{
     background: rgba(10,18,34,.98);
   }
 }
+
+/* =====================================================================
+   RESTYLE "TIMBRO" — blocco 1: palette globale + Login + Home + Ore (dipendente)
+   Stessa logica di sempre (righe ora inizio/fine per luogo, correzione in
+   archivio): qui si cambia solo l'aspetto. Override in fondo come il resto
+   del file. Prossimo blocco: Prodotti + Admin.
+   ===================================================================== */
+
+:root{
+  --bg: #f3ede0;
+  --card: #fffdf8;
+  --text: #24313f;
+  --muted: #6b6252;
+  --primary: #b23a2e;
+  --border: rgba(36,49,63,.16);
+  --radius: 16px;
+  --danger: #b23a2e;
+  --ok: #3c6e51;
+  --warn: #d99a2b;
+}
+
+/* --- LOGIN --- */
+body.auth-page{
+  background: radial-gradient(1100px 650px at 20% 0%, rgba(178,58,46,.08), transparent 60%), var(--bg);
+}
+body.auth-page .auth-card{
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(36,49,63,.04), 0 20px 50px rgba(36,49,63,.10);
+  backdrop-filter: none;
+}
+body.auth-page h1{
+  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
+  text-transform:uppercase; letter-spacing:-.01em;
+}
+body.auth-page .input{
+  background: var(--bg);
+  border-color: var(--border);
+  color: var(--text);
+}
+body.auth-page .input:focus{
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(178,58,46,.15);
+}
+body.auth-page .auth-card .btn{
+  background: var(--primary);
+  color:#fff;
+  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
+  text-transform:uppercase; letter-spacing:.03em; font-size:14px;
+}
+
+/* --- TOPBAR + PULSANTI (dipendente) --- */
+body.page-employee{
+  background: var(--bg);
+}
+body.page-employee .topbar{
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+body.page-employee .topbar h2{
+  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
+  letter-spacing:.02em;
+}
+body.page-employee .btn{
+  border-color: var(--border);
+  background: var(--card);
+  color: var(--text);
+}
+body.page-employee .btn.primary{
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* --- HOME (schede Ore/Richieste/Prodotti/Archivio) --- */
+body.page-employee .home-card{
+  border-color: var(--border);
+  background: var(--card);
+  box-shadow: 0 1px 0 rgba(36,49,63,.03), 0 8px 24px rgba(36,49,63,.05);
+}
+body.page-employee .home-card-title{
+  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
+  text-transform:uppercase; font-size:13px; letter-spacing:.02em;
+}
+body.page-employee .home-card-line{ background: var(--border); }
+body.page-employee .home-icon{
+  border-color: var(--border);
+  background: #efe6d2;
+  color: var(--primary);
+}
+body.page-employee .home-metric strong{
+  font-family:"Consolas","IBM Plex Mono",ui-monospace,monospace;
+  font-variant-numeric: tabular-nums;
+}
+body.page-employee .home-card-cta{
+  border-color: var(--border);
+  background: #efe6d2;
+  color: var(--text);
+}
+
+/* --- FORM ORE (righe luogo/attività/orario, stessa logica di oggi) --- */
+body.page-employee .form-card{
+  background: var(--card);
+  border-color: var(--border);
+  box-shadow: 0 1px 0 rgba(36,49,63,.03), 0 8px 24px rgba(36,49,63,.05);
+}
+body.page-employee label{
+  font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; font-weight:700;
+}
+body.page-employee .input,
+body.page-employee input,
+body.page-employee select{
+  background: var(--bg);
+  border-color: var(--border);
+  color: var(--text);
+}
+body.page-employee input:focus,
+body.page-employee select:focus{
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(178,58,46,.15);
+}
+body.page-employee input[type="time"]{
+  font-family:"Consolas","IBM Plex Mono",ui-monospace,monospace;
+  font-weight:700; text-align:center; font-variant-numeric: tabular-nums;
+}
+
+body.page-employee .hours-row{
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: 0 1px 0 rgba(36,49,63,.03);
+}
+body.page-employee .hours-row-title{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color: var(--muted);
+}
+body.page-employee .btn.danger{
+  border-color: var(--primary);
+  background: transparent;
+  color: var(--primary);
+  border-radius: 20px;
+  font-size:12px;
+  padding: 6px 12px;
+}
+body.page-employee #addHoursRowBtn,
+body.page-employee #clearHoursRowsBtn{
+  border: 1.5px dashed var(--border);
+  background: transparent;
+  color: var(--muted);
+}
+body.page-employee #sendBtn{
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
+  text-transform:uppercase; letter-spacing:.03em;
+  width:100%;
+  margin-top:14px;
+}
+
+body.page-employee .auto-menu{
+  border-color: var(--border);
+  background: var(--card);
+  box-shadow: 0 18px 50px rgba(36,49,63,.15);
+}
+body.page-employee .auto-item{
+  border-color: var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+body.page-employee .msg.ok{ color: var(--ok); }
+body.page-employee .msg.error{ color: var(--primary); }
+
+body.page-employee .toast{
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
+  box-shadow: 0 18px 50px rgba(36,49,63,.18);
+}
+body.page-employee .toast.ok{ border-color: rgba(60,110,81,.4); }
+body.page-employee .toast.error{ border-color: rgba(178,58,46,.4); }

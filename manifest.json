@@ -4,8 +4,8 @@
   "description": "Sistema di gestione ore, richieste e prodotti per dipendenti e amministratori",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b1220",
-  "theme_color": "#6ea8fe",
+  "background_color": "#f3ede0",
+  "theme_color": "#b23a2e",
   "orientation": "any",
   "icons": [
     {
