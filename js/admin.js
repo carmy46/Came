@@ -1055,40 +1055,78 @@ async function loadProducts() {
         acc + gg.items.reduce((a2, it) => a2 + (Number(it.quantity) || 0), 0)
       , 0);
 
-      const ordersHtml = sorted.map(g => {
-        const pieces = g.items.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
-        const chips = g.items
-          .map(it => `<span class="po-chip">${escapeHtml(it.product_name)} <b>×${escapeHtml(String(it.quantity))}</b></span>`)
-          .join("");
+      // Raggruppa per dipendente: se la stessa persona ha ordinato per più
+      // luoghi, in lista compare UNA riga compatta che si apre sui dettagli.
+      const byEmployee = new Map(); // userId -> { full_name, groups: [] }
+      for (const g of sorted) {
+        const e = byEmployee.get(g.userId) || { full_name: g.full_name || "Senza nome", groups: [] };
+        e.groups.push(g);
+        byEmployee.set(g.userId, e);
+      }
 
-        const placeEnc = encodeURIComponent(g.place || "");
-        const deliveryVal = g.delivery_date ? String(g.delivery_date).slice(0, 10) : "";
-        const delivered = !!g.delivery_date;
-        const statusHtml = delivered
+      const employeesHtml = Array.from(byEmployee.entries()).map(([userId, emp]) => {
+        const empKey = `${day}|${userId}`;
+        const empPieces = emp.groups.reduce((acc, gg) =>
+          acc + gg.items.reduce((a2, it) => a2 + (Number(it.quantity) || 0), 0)
+        , 0);
+        const pending = emp.groups.filter(gg => !gg.delivery_date).length;
+        const placesCount = emp.groups.length;
+
+        const statusHtml = pending === 0
           ? `<span class="po-status po-status--done">Consegnato</span>`
-          : `<span class="po-status po-status--pending">Da consegnare</span>`;
+          : `<span class="po-status po-status--pending">${pending} da consegnare</span>`;
+
+        const placeRowsHtml = emp.groups.map(g => {
+          const pieces = g.items.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
+          const chips = g.items
+            .map(it => `<span class="po-chip">${escapeHtml(it.product_name)} <b>×${escapeHtml(String(it.quantity))}</b></span>`)
+            .join("");
+
+          const placeEnc = encodeURIComponent(g.place || "");
+          const deliveryVal = g.delivery_date ? String(g.delivery_date).slice(0, 10) : "";
+          const rowStatus = g.delivery_date
+            ? `<span class="po-status po-status--done">Consegnato</span>`
+            : `<span class="po-status po-status--pending">Da consegnare</span>`;
+
+          return `
+            <div class="po-order">
+              <div class="po-order-who">
+                <div class="po-order-placename">${escapeHtml(g.place || "—")}</div>
+                <div class="po-order-place">${escapeHtml(String(pieces))} pz</div>
+              </div>
+              <div class="po-order-items">${chips}</div>
+              <div class="po-order-deliver">
+                ${rowStatus}
+                <input
+                  class="input po-deliver-input"
+                  type="date"
+                  aria-label="Data consegna"
+                  data-po-delivery-input
+                  data-user-id="${escapeHtml(g.userId)}"
+                  data-order-date="${escapeHtml(String(g.order_date))}"
+                  data-place="${escapeHtml(placeEnc)}"
+                  value="${escapeHtml(deliveryVal)}"
+                />
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        const openAttr = adminOpenProductEmployeeKeys.has(empKey) ? "open" : "";
 
         return `
-          <div class="po-order">
-            <div class="po-order-who">
-              <div class="po-order-name">${escapeHtml(g.full_name || "Senza nome")}</div>
-              <div class="po-order-place">${escapeHtml(g.place || "—")} · ${escapeHtml(String(pieces))} pz</div>
-            </div>
-            <div class="po-order-items">${chips}</div>
-            <div class="po-order-deliver">
-              ${statusHtml}
-              <input
-                class="input po-deliver-input"
-                type="date"
-                aria-label="Data consegna"
-                data-po-delivery-input
-                data-user-id="${escapeHtml(g.userId)}"
-                data-order-date="${escapeHtml(String(g.order_date))}"
-                data-place="${escapeHtml(placeEnc)}"
-                value="${escapeHtml(deliveryVal)}"
-              />
-            </div>
-          </div>
+          <details class="po-emp" data-emp-key="${escapeHtml(empKey)}" ${openAttr}>
+            <summary class="po-emp-head">
+              <span class="po-emp-name">${escapeHtml(emp.full_name)}</span>
+              <span class="po-emp-meta">
+                <span class="po-emp-places">${placesCount} luog${placesCount === 1 ? "o" : "hi"}</span>
+                <span class="po-day-pz">${escapeHtml(String(empPieces))} pz</span>
+                ${statusHtml}
+                <span class="po-chev">▾</span>
+              </span>
+            </summary>
+            <div class="po-emp-body">${placeRowsHtml}</div>
+          </details>
         `;
       }).join("");
 
@@ -1097,25 +1135,26 @@ async function loadProducts() {
           <div class="po-day-head">
             <div class="po-day-date">${escapeHtml(weekdayOf(day))} ${escapeHtml(formatDateIT(day))}</div>
             <div class="po-day-sum">
-              <span>${escapeHtml(String(sorted.length))} ordine${sorted.length === 1 ? "" : "i"}</span>
+              <span>${byEmployee.size} dipendent${byEmployee.size === 1 ? "e" : "i"} · ${escapeHtml(String(sorted.length))} ordine${sorted.length === 1 ? "" : "i"}</span>
               <span class="po-day-pz">${escapeHtml(String(dayPieces))} pz</span>
             </div>
           </div>
-          ${ordersHtml}
+          ${employeesHtml}
         </div>
       `;
     }).join("");
 
-    el.innerHTML = `
-      <div class="po-table">
-        <div class="po-colhead">
-          <div>Dipendente · Luogo</div>
-          <div>Prodotti</div>
-          <div>Consegna</div>
-        </div>
-        ${daysHtml}
-      </div>
-    `;
+    el.innerHTML = `<div class="po-table">${daysHtml}</div>`;
+
+    // Ricorda quali dipendenti sono aperti (sopravvive al ricaricamento della lista)
+    el.querySelectorAll("details.po-emp[data-emp-key]").forEach((d) => {
+      d.addEventListener("toggle", () => {
+        const k = d.getAttribute("data-emp-key");
+        if (!k) return;
+        if (d.open) adminOpenProductEmployeeKeys.add(k);
+        else adminOpenProductEmployeeKeys.delete(k);
+      });
+    });
 
     // Bind consegna: autosalvataggio quando cambi la data
     const saveTimers = new Map(); // key -> timer

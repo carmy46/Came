@@ -3006,9 +3006,6 @@ body.page-admin .po-table{
   background:var(--admin-panel2);
 }
 
-/* intestazione colonne: nascosta su mobile, griglia su desktop */
-body.page-admin .po-colhead{ display:none; }
-
 /* giorno */
 body.page-admin .po-day + .po-day{ border-top:1px solid var(--admin-stroke); }
 body.page-admin .po-day-head{
@@ -3038,14 +3035,51 @@ body.page-admin .po-day-pz{
   border-radius:999px;
 }
 
-/* ordine (riga) */
-body.page-admin .po-order{
+/* riga dipendente (compatta, si apre sui luoghi) */
+body.page-admin .po-emp{ border-top:1px solid rgba(255,255,255,.06); }
+body.page-admin .po-emp-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
   padding:12px 16px;
-  border-top:1px solid rgba(255,255,255,.06);
+  cursor:pointer;
+  user-select:none;
+  list-style:none;
+  transition:background-color .12s ease;
+}
+body.page-admin .po-emp-head::-webkit-details-marker{ display:none; }
+body.page-admin .po-emp-head:hover{ background:rgba(255,255,255,.03); }
+body.page-admin .po-emp-name{ font-weight:800; }
+body.page-admin .po-emp-meta{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  font-size:12.5px;
+  color:var(--muted);
+}
+body.page-admin .po-chev{
+  opacity:.75;
+  font-weight:900;
+  transition:transform .12s ease;
+}
+body.page-admin .po-emp[open] .po-chev{ transform:rotate(180deg); }
+body.page-admin .po-emp[open] > .po-emp-head{ background:rgba(255,255,255,.035); }
+body.page-admin .po-emp-body{
+  background:rgba(0,0,0,.14);
+  border-top:1px solid rgba(255,255,255,.05);
+}
+
+/* ordine per luogo (riga dentro il dipendente) */
+body.page-admin .po-order{
+  padding:12px 16px 12px 26px;
   display:grid;
   gap:10px;
 }
-body.page-admin .po-order-name{ font-weight:800; }
+body.page-admin .po-order + .po-order{ border-top:1px solid rgba(255,255,255,.05); }
+body.page-admin .po-order-placename{ font-weight:700; }
 body.page-admin .po-order-place{ color:var(--muted); font-size:12.5px; margin-top:2px; }
 
 /* chips prodotti */
@@ -3075,25 +3109,12 @@ body.page-admin .po-status--done{ color:#08211d; background:var(--accent2); }
 body.page-admin .po-status--pending{ color:#2a1e05; background:var(--amber); }
 body.page-admin .po-deliver-input{ max-width:170px; }
 
-/* desktop: tabella a colonne allineate (colhead + righe stessa griglia) */
+/* desktop: righe luogo a colonne allineate */
 @media (min-width: 860px){
-  body.page-admin .po-colhead{
-    display:grid;
-    grid-template-columns: minmax(180px,1.3fr) minmax(220px,2fr) 220px;
-    gap:14px;
-    padding:12px 16px;
-    background:rgba(255,255,255,.05);
-    border-bottom:1px solid var(--admin-stroke);
-    font-size:11px;
-    font-weight:800;
-    letter-spacing:.5px;
-    text-transform:uppercase;
-    color:var(--muted);
-  }
   body.page-admin .po-order{
-    grid-template-columns: minmax(180px,1.3fr) minmax(220px,2fr) 220px;
+    grid-template-columns: minmax(160px,1.1fr) minmax(220px,2fr) 220px;
     align-items:center;
   }
-  body.page-admin .po-order:hover{ background:rgba(255,255,255,.03); }
+  body.page-admin .po-order:hover{ background:rgba(255,255,255,.02); }
   body.page-admin .po-order-deliver{ justify-content:flex-end; }
 }
