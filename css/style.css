@@ -3006,8 +3006,15 @@ body.page-admin .po-table{
   background:var(--admin-panel2);
 }
 
+/* chips di stato (coda di lavoro) */
+body.page-admin .po-status-chips{ margin:2px 0 12px; }
+
 /* giorno */
 body.page-admin .po-day + .po-day{ border-top:1px solid var(--admin-stroke); }
+
+/* giorno interamente consegnato: attenuato, torna pieno al passaggio */
+body.page-admin .po-day--done{ opacity:.55; transition:opacity .15s ease; }
+body.page-admin .po-day--done:hover{ opacity:1; }
 body.page-admin .po-day-head{
   display:flex;
   align-items:center;

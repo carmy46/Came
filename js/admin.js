@@ -874,6 +874,28 @@ function labelRequestType(t) {
   });
 })();
 
+// Filtro stato consegna (chips sopra l'elenco): "all" | "pending" | "delivered".
+// Agisce SOLO sull'elenco: KPI ed export restano sul mese intero.
+let adminPoStatusFilter = "all";
+
+document.querySelectorAll("[data-po-status]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    adminPoStatusFilter = btn.getAttribute("data-po-status") || "all";
+    document.querySelectorAll("[data-po-status]").forEach((b) => b.classList.toggle("active", b === btn));
+    loadProducts();
+  });
+});
+
+function updatePoStatusChips(pendingCount, deliveredCount) {
+  const set = (status, label) => {
+    const b = document.querySelector(`[data-po-status="${status}"]`);
+    if (b) b.textContent = label;
+  };
+  set("all", "Tutti");
+  set("pending", `Da consegnare (${pendingCount})`);
+  set("delivered", `Consegnati (${deliveredCount})`);
+}
+
 function setProductKpis({ orders = "—", pieces = "—", places = "—", topProduct = "—" } = {}) {
   const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = String(val); };
   set("poKpiOrders", orders);
@@ -1021,15 +1043,30 @@ async function loadProducts() {
     // Salva per export (dati già filtrati come in UI)
     adminCurrentProductGroups = groups.slice();
 
+    // Conteggi per le chips di stato (sempre sul mese filtrato per testo)
+    const pendingTotal = groups.filter(g => !g.delivery_date).length;
+    updatePoStatusChips(pendingTotal, groups.length - pendingTotal);
+
     if (!groups || groups.length === 0) {
       el.textContent = "Nessun ordine prodotti in questo mese.";
       setProductKpis({ orders: 0, pieces: 0, places: 0, topProduct: "—" });
       return;
     }
 
-    // Niente "card per dipendente": tabella unica con nome dipendente dentro ogni riga
+    // Coda di lavoro: la chip attiva restringe l'elenco (non KPI né export)
+    let visibleGroups = groups;
+    if (adminPoStatusFilter === "pending") visibleGroups = groups.filter(g => !g.delivery_date);
+    else if (adminPoStatusFilter === "delivered") visibleGroups = groups.filter(g => !!g.delivery_date);
+
+    if (visibleGroups.length === 0) {
+      el.textContent = adminPoStatusFilter === "pending"
+        ? "Niente da consegnare in questo mese ✅"
+        : "Nessun ordine consegnato in questo mese.";
+      return;
+    }
+
     const byDay = new Map(); // order_date -> groups[]
-    for (const g of groups) {
+    for (const g of visibleGroups) {
       const arr = byDay.get(g.order_date) || [];
       arr.push(g);
       byDay.set(g.order_date, arr);
@@ -1112,7 +1149,8 @@ async function loadProducts() {
           `;
         }).join("");
 
-        const openAttr = adminOpenProductEmployeeKeys.has(empKey) ? "open" : "";
+        // Con un solo luogo l'accordion non comprime nulla: riga già aperta
+        const openAttr = (emp.groups.length === 1 || adminOpenProductEmployeeKeys.has(empKey)) ? "open" : "";
 
         return `
           <details class="po-emp" data-emp-key="${escapeHtml(empKey)}" ${openAttr}>
@@ -1130,8 +1168,12 @@ async function loadProducts() {
         `;
       }).join("");
 
+      // Giorno interamente consegnato: attenuato (solo nella vista "Tutti"),
+      // così l'occhio cade su ciò che è ancora da lavorare.
+      const dayDone = adminPoStatusFilter === "all" && sorted.every(g => !!g.delivery_date);
+
       return `
-        <div class="po-day">
+        <div class="po-day${dayDone ? " po-day--done" : ""}">
           <div class="po-day-head">
             <div class="po-day-date">${escapeHtml(weekdayOf(day))} ${escapeHtml(formatDateIT(day))}</div>
             <div class="po-day-sum">

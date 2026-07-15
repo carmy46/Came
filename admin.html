@@ -258,6 +258,13 @@
           </div>
         </details>
 
+        <!-- Coda di lavoro: filtra l'elenco per stato consegna (non tocca KPI/export) -->
+        <div class="chips po-status-chips">
+          <button class="chip active" type="button" data-po-status="all">Tutti</button>
+          <button class="chip" type="button" data-po-status="pending">Da consegnare</button>
+          <button class="chip" type="button" data-po-status="delivered">Consegnati</button>
+        </div>
+
         <div class="admin-hours-tools">
           <button id="adminProdExpandAllBtn" class="btn small" type="button">Apri tutti</button>
           <button id="adminProdCollapseAllBtn" class="btn small" type="button">Chiudi tutti</button>
