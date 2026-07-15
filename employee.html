@@ -360,12 +360,16 @@
         <input id="poSearch" class="input" type="text" placeholder="Cerca prodotto (es. carta, sacchi...)"/>
 
         <div id="poCart" class="product-cart" style="margin-top:10px;">
-          <div class="product-row" data-po-item="Altro">
+          <div class="product-row product-row-other" data-po-item="Altro">
             <div>
-              <div class="product-name">Altro</div>
+              <div class="product-name">Altro (non in elenco)</div>
               <input id="poOtherName" class="input" type="text" placeholder="Scrivi il prodotto..." />
             </div>
-            <input class="input product-qty" data-po-qty type="number" min="0" step="1" value="0" />
+            <div class="qty-stepper">
+              <button type="button" class="qty-btn" data-qty-dec aria-label="Diminuisci">−</button>
+              <input class="qty-input" data-po-qty type="number" min="0" step="1" inputmode="numeric" value="0" data-zero="true" />
+              <button type="button" class="qty-btn" data-qty-inc aria-label="Aumenta">+</button>
+            </div>
           </div>
         </div>
 

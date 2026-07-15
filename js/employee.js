@@ -156,14 +156,53 @@ function fillDatalist(listId, values) {
     .join("");
 }
 
+// Stepper quantità: bottone −, numero, bottone +.
+// L'input mantiene data-po-qty così tutta la logica d'invio resta invariata.
+function stepperHtml(value = 0) {
+  const v = Number(value) || 0;
+  return (
+    `<div class="qty-stepper">` +
+      `<button type="button" class="qty-btn" data-qty-dec aria-label="Diminuisci">−</button>` +
+      `<input class="qty-input" data-po-qty type="number" min="0" step="1" inputmode="numeric" value="${v}" data-zero="${v === 0}" />` +
+      `<button type="button" class="qty-btn" data-qty-inc aria-label="Aumenta">+</button>` +
+    `</div>`
+  );
+}
+
 function makeProductRow(name) {
   const row = document.createElement("div");
   row.className = "product-row";
   row.setAttribute("data-po-item", name);
   row.innerHTML =
     `<div class="product-name">${escapeHtml(name)}</div>` +
-    `<input class="input product-qty" data-po-qty type="number" min="0" step="1" value="0" />`;
+    stepperHtml(0);
   return row;
+}
+
+// Aggiorna lo stato visivo "vuoto" (0) di un input quantità
+function refreshQtyVisual(input) {
+  if (!input) return;
+  const v = Number(input.value) || 0;
+  input.setAttribute("data-zero", String(v === 0));
+}
+
+// Somma le quantità di una categoria e aggiorna la pill "N pz" nell'intestazione
+function updateCategoryPieces(acc) {
+  if (!acc) return;
+  let sum = 0;
+  acc.querySelectorAll("[data-po-qty]").forEach((i) => { sum += Number(i.value) || 0; });
+  const pill = acc.querySelector("[data-cat-pieces]");
+  if (!pill) return;
+  if (sum > 0) { pill.textContent = `${sum} pz`; pill.hidden = false; }
+  else { pill.hidden = true; }
+}
+
+function updateCategoryPiecesFor(input) {
+  updateCategoryPieces(input?.closest?.(".product-acc"));
+}
+
+function refreshAllCategoryPieces() {
+  document.querySelectorAll(".product-acc").forEach(updateCategoryPieces);
 }
 
 // Rigenera il carrello prodotti raggruppato per categoria (sezioni pieghevoli),
@@ -185,16 +224,15 @@ function renderProductRows(groupedProducts) {
     acc.className = "acc product-acc";
     acc.setAttribute("data-category", group.category);
 
-    const count = group.names.length;
     const head = document.createElement("div");
     head.className = "acc-head";
     head.setAttribute("data-acc-toggle", "");
     head.innerHTML =
-      `<div>
-        <div class="acc-title">${escapeHtml(group.category)}</div>
-        <div class="acc-meta">${count} prodott${count === 1 ? "o" : "i"}</div>
-      </div>
-      <span class="acc-chev">▾</span>`;
+      `<div class="acc-title">${escapeHtml(group.category)}</div>
+      <div class="acc-head-right">
+        <span class="cat-pieces" data-cat-pieces hidden>0 pz</span>
+        <span class="acc-chev">▾</span>
+      </div>`;
 
     const body = document.createElement("div");
     body.className = "acc-body";
@@ -209,6 +247,7 @@ function renderProductRows(groupedProducts) {
   else cart.appendChild(frag);
 
   poApplySearch();
+  refreshAllCategoryPieces();
 }
 
 // Carica il catalogo dal DB e aggiorna liste prodotti (raggruppati per categoria)/luoghi/attività
@@ -1149,9 +1188,10 @@ function poApplySearch() {
 function poClearQuantities() {
   for (const row of poGetRows()) {
     const qtyEl = row.querySelector("[data-po-qty]");
-    if (qtyEl) qtyEl.value = 0;
+    if (qtyEl) { qtyEl.value = 0; refreshQtyVisual(qtyEl); }
   }
   if (poOtherNameEl) poOtherNameEl.value = "";
+  refreshAllCategoryPieces();
 }
 
 function poFillVisibleOnes() {
@@ -1161,8 +1201,37 @@ function poFillVisibleOnes() {
     const qtyEl = row.querySelector("[data-po-qty]");
     if (!qtyEl) continue;
     const v = Number(qtyEl.value || 0);
-    if (!Number.isFinite(v) || v <= 0) qtyEl.value = 1;
+    if (!Number.isFinite(v) || v <= 0) { qtyEl.value = 1; refreshQtyVisual(qtyEl); }
   }
+  refreshAllCategoryPieces();
+}
+
+// Stepper +/− e digitazione manuale: un solo listener sul contenitore (delega)
+function initProductStepper() {
+  if (!poCartEl) return;
+
+  poCartEl.addEventListener("click", (e) => {
+    const dec = e.target.closest?.("[data-qty-dec]");
+    const inc = e.target.closest?.("[data-qty-inc]");
+    if (!dec && !inc) return;
+    const stepper = (dec || inc).closest(".qty-stepper");
+    const input = stepper?.querySelector("[data-po-qty]");
+    if (!input) return;
+    let v = Number(input.value) || 0;
+    v = inc ? v + 1 : Math.max(0, v - 1);
+    input.value = v;
+    refreshQtyVisual(input);
+    updateCategoryPiecesFor(input);
+    setPoMsg("");
+  });
+
+  poCartEl.addEventListener("input", (e) => {
+    const input = e.target.closest?.("[data-po-qty]");
+    if (!input) return;
+    if ((Number(input.value) || 0) < 0) input.value = 0;
+    refreshQtyVisual(input);
+    updateCategoryPiecesFor(input);
+  });
 }
 
 function initProductsUI() {
@@ -1172,6 +1241,9 @@ function initProductsUI() {
   // default date e mese
   const today = getTodayISO();
   if (poDateEl && !poDateEl.value) poDateEl.value = today;
+
+  // stepper quantità (+/−) + digitazione manuale
+  initProductStepper();
 
   // ricerca rapida
   let t = null;
