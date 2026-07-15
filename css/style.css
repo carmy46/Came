@@ -660,6 +660,43 @@ ul {
   font-weight:800;
 }
 
+/* Pausa nascosta finché non serve: [hidden] deve vincere sul display:grid di .grid2 */
+.hours-row .pause-fields[hidden]{ display:none; }
+
+.pause-toggle{
+  background:none;
+  border:0;
+  padding:8px 0 2px;
+  color:var(--accent2, #6ea8fe);
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  text-align:left;
+}
+.pause-toggle:hover{ text-decoration:underline; }
+
+/* Totale giornata live (si aggiorna mentre si compila) */
+.hours-total{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:12px;
+  padding:12px 14px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:rgba(255,255,255,.04);
+  font-size:13px;
+  color:var(--muted);
+}
+.hours-total strong{
+  font-size:18px;
+  font-weight:800;
+  color:var(--text);
+}
+/* [hidden] deve vincere sul display:flex qui sopra */
+.hours-total[hidden]{ display:none; }
+
 .btn.danger{
   border-color: rgba(255,107,107,.35);
   background: rgba(255,107,107,.12);

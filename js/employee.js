@@ -423,6 +423,41 @@ function updateHoursRowUi() {
       removeBtn.disabled = rows.length <= 1;
     }
   });
+  updateLiveTotal();
+}
+
+// Totale giornata live: somma le righe con inizio+fine compilati (pausa inclusa
+// solo se completa). Stesso calcolo dell'invio (netMinutes gestisce la mezzanotte).
+function computeLiveTotalMinutes() {
+  let total = 0;
+  for (const row of getHoursRowElements()) {
+    const getV = (f) => (row.querySelector(`[data-field="${f}"]`)?.value || "").trim();
+    const start_time = getV("start_time");
+    const end_time = getV("end_time");
+    if (!start_time || !end_time) continue;
+    const bs = getV("break_start");
+    const be = getV("break_end");
+    total += netMinutes({
+      start_time,
+      end_time,
+      break_start: (bs && be) ? bs : null,
+      break_end: (bs && be) ? be : null,
+    });
+  }
+  return total;
+}
+
+function updateLiveTotal() {
+  const box = document.getElementById("hoursLiveTotal");
+  if (!box) return;
+  const min = computeLiveTotalMinutes();
+  const valueEl = box.querySelector("[data-total]");
+  if (min > 0) {
+    if (valueEl) valueEl.textContent = formatHM(min);
+    box.hidden = false;
+  } else {
+    box.hidden = true;
+  }
 }
 
 function makeHoursRow(initial = {}) {
@@ -445,16 +480,17 @@ function makeHoursRow(initial = {}) {
       </div>
     </div>
 
-    <div class="grid2">
+    <div class="grid2 pause-fields" data-pause-fields hidden>
       <div>
-        <label class="label">Inizio pausa (opzionale)</label>
+        <label class="label">Inizio pausa</label>
         <input class="input" type="time" step="300" data-field="break_start" placeholder="HH:MM" />
       </div>
       <div>
-        <label class="label">Fine pausa (opzionale)</label>
+        <label class="label">Fine pausa</label>
         <input class="input" type="time" step="300" data-field="break_end" placeholder="HH:MM" />
       </div>
     </div>
+    <button class="pause-toggle" type="button" data-pause-toggle>+ Aggiungi pausa</button>
 
     <label class="label">Luogo</label>
     <div class="auto">
@@ -480,6 +516,24 @@ function makeHoursRow(initial = {}) {
   setVal("break_end", initial.break_end);
   setVal("location", initial.location);
   setVal("activity", initial.activity);
+
+  // Pausa nascosta finché non serve: il toggle la mostra; richiudendola svuota i campi
+  const pauseFields = row.querySelector("[data-pause-fields]");
+  const pauseToggle = row.querySelector("[data-pause-toggle]");
+  const setPauseVisible = (show) => {
+    if (!pauseFields || !pauseToggle) return;
+    pauseFields.hidden = !show;
+    pauseToggle.textContent = show ? "− Rimuovi pausa" : "+ Aggiungi pausa";
+    if (!show) {
+      setVal("break_start", "");
+      setVal("break_end", "");
+    }
+  };
+  pauseToggle?.addEventListener("click", () => {
+    setPauseVisible(pauseFields?.hidden);
+    updateLiveTotal();
+  });
+  if (initial.break_start || initial.break_end) setPauseVisible(true);
 
   row.querySelector("[data-remove-hours-row]")?.addEventListener("click", () => {
     row.remove();
@@ -540,12 +594,94 @@ function initHoursFormUi() {
 
   addHoursRowBtn?.addEventListener("click", () => {
     setMsg("");
-    addHoursRow();
+    // Lavori consecutivi: la nuova riga parte dalla fine dell'ultima
+    const rows = getHoursRowElements();
+    const lastEnd = (rows[rows.length - 1]?.querySelector('[data-field="end_time"]')?.value || "").trim();
+    addHoursRow(lastEnd ? { start_time: lastEnd } : {});
   });
 
   clearHoursRowsBtn?.addEventListener("click", () => {
     setMsg("");
     resetHoursRows();
+  });
+
+  // Totale giornata live: si aggiorna a ogni modifica dei campi orario
+  hoursRowsEl?.addEventListener("input", (e) => {
+    if (e.target.closest?.("[data-field]")) updateLiveTotal();
+  });
+
+  initCopyLastDay();
+}
+
+// "Copia ultima registrazione": precompila le righe dall'ultimo giorno
+// registrato dall'utente (orari, pause, luoghi, attività). La data resta
+// quella selezionata: si controlla, si corregge se serve, si invia.
+function initCopyLastDay() {
+  const btn = document.getElementById("copyLastDayBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    const orig = btn.textContent;
+    try {
+      setMsg("");
+      btn.disabled = true;
+      btn.textContent = "Carico...";
+
+      const user = await getCurrentUser();
+      if (!user) {
+        setMsg("Sessione scaduta. Rifai login.", "error");
+        window.location.replace("login.html");
+        return;
+      }
+
+      // Prende le righe più recenti e tiene solo quelle dell'ultimo giorno
+      const { data, error } = await supabaseClient
+        .from("work_logs")
+        .select("work_date,start_time,end_time,break_start,break_end,location,activity")
+        .eq("user_id", user.id)
+        .order("work_date", { ascending: false })
+        .order("start_time", { ascending: true })
+        .limit(20);
+
+      if (error) {
+        console.error(error);
+        setMsg("Errore nel recupero dell'ultima registrazione.", "error");
+        return;
+      }
+      if (!data || data.length === 0) {
+        setMsg("Non hai ancora registrazioni da copiare.", "info");
+        return;
+      }
+
+      const lastDate = data[0].work_date;
+      const lastRows = data
+        .filter(r => r.work_date === lastDate)
+        .sort((a, b) => String(a.start_time || "").localeCompare(String(b.start_time || "")));
+
+      // Il DB restituisce orari "HH:MM:SS": gli input time vogliono "HH:MM"
+      const hm = (t) => String(t || "").slice(0, 5);
+
+      if (hoursRowsEl) hoursRowsEl.innerHTML = "";
+      for (const r of lastRows) {
+        addHoursRow({
+          start_time: hm(r.start_time),
+          end_time: hm(r.end_time),
+          break_start: hm(r.break_start),
+          break_end: hm(r.break_end),
+          location: r.location || "",
+          activity: r.activity || "",
+        });
+      }
+
+      showToast(`Copiato il ${formatDateIT(lastDate)} (${lastRows.length} rig${lastRows.length === 1 ? "a" : "he"}) ✅`, "ok");
+      setMsg(`Righe copiate dal ${formatDateIT(lastDate)}: controlla orari e luoghi, poi Invia.`, "info");
+    } catch (err) {
+      console.error(err);
+      setMsg("Errore imprevisto. Controlla console.", "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
   });
 }
 

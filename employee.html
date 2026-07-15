@@ -139,6 +139,10 @@
         <label class="label">Data</label>
         <input class="input" type="date" id="work_date" required />
 
+        <button id="copyLastDayBtn" class="btn small" type="button" style="margin-top:10px;">
+          ⟳ Copia ultima registrazione
+        </button>
+
         <p class="muted" style="margin:10px 0 0;">
           Puoi inserire <strong>più luoghi</strong> nello stesso giorno: aggiungi più righe e premi <strong>Invia</strong> una sola volta.
         </p>
@@ -148,6 +152,11 @@
         <div class="grid2" style="margin-top:10px;">
           <button id="addHoursRowBtn" class="btn small" type="button">+ Aggiungi riga</button>
           <button id="clearHoursRowsBtn" class="btn small" type="button">Reset righe</button>
+        </div>
+
+        <div class="hours-total" id="hoursLiveTotal" hidden>
+          <span>Totale giornata</span>
+          <strong data-total>0h 00m</strong>
         </div>
 
         <datalist id="placesList"></datalist>
