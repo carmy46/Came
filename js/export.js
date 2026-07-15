@@ -264,7 +264,7 @@ function exportToExcelElegant({
     }
   }
 
-  // Zebra: coloro righe pari
+  // Zebra: coloro righe pari con un azzurro chiarissimo (leggibile su testo scuro)
   for (let r = bodyStartRow; r <= lastRow; r++) {
     const isEven = ((r - bodyStartRow) % 2 === 1);
     if (!isEven) continue;
@@ -273,7 +273,7 @@ function exportToExcelElegant({
       e: { r, c: columns.length - 1 }
     });
     setRangeStyle(ws, rowRange, {
-      fill: { fgColor: { rgb: "0B1730" } }, // leggermente diverso
+      fill: { fgColor: { rgb: "F4F7FC" } },
     });
   }
 
@@ -388,7 +388,7 @@ function exportToExcelMultiSheet({ filename = "export.xlsx", sheets = [] }) {
     for (let r = bodyStartRow; r <= lastRow; r++) {
       if ((r - bodyStartRow) % 2 !== 1) continue;
       const rowRange = XLSX.utils.encode_range({ s: { r, c: 0 }, e: { r, c: columns.length - 1 } });
-      setRangeStyle(ws, rowRange, { fill: { fgColor: { rgb: "0B1730" } } });
+      setRangeStyle(ws, rowRange, { fill: { fgColor: { rgb: "F4F7FC" } } });
     }
 
     autoFitColumns(ws, [columns, ...dataObjects.map(o => columns.map(k => o[k]))], 10, 48);
@@ -448,4 +448,224 @@ function exportToPdfTable({ columns, rows, filename = "export.pdf", title = "" }
   downloadBlob(blob, safeFilename(filename));
 }
 
+// =====================================================================
+// REPORT CONSUMI PRODOTTI (Excel elegante, multi-foglio)
+// Tema chiaro professionale: banda titolo scura, intestazioni navy,
+// righe alternate azzurro chiarissimo, riga/colonna Totale in risalto,
+// zeri lasciati vuoti per ridurre il "rumore" visivo.
+// =====================================================================
+
+// Palette (RGB senza #) usata solo qui, per non toccare gli altri export.
+const XLC = {
+  ink:     "1F2937", // testo scuro
+  titleBg: "0F1A2E", titleFg: "FFFFFF",
+  subBg:   "F1F5FB", subFg: "475569",
+  headBg:  "1A2F55", headFg: "FFFFFF",
+  zebra:   "F4F7FC",
+  totBg:   "DCE6F5", totFg: "0F1A2E",
+  border:  "CBD5E1",
+};
+
+function xlcBorderAll(color) {
+  const b = { style: "thin", color: { rgb: color || XLC.border } };
+  return { top: b, bottom: b, left: b, right: b };
+}
+
+function xlcGeneratedString() {
+  return new Intl.DateTimeFormat("it-IT", { dateStyle: "short", timeStyle: "short" }).format(new Date());
+}
+
+// Costruisce un foglio "a matrice" già stilizzato e lo aggiunge al workbook.
+// header: array intestazioni. dataRows: array di righe (array). Le celle numeriche
+// vengono riconosciute da typeof === "number"; le celle "" restano vuote (ma con bordo).
+function xlcBuildMatrixSheet(wb, {
+  sheetName,
+  title,
+  subtitle = "",
+  header = [],
+  dataRows = [],
+  totalsRow = null,          // array stessa lunghezza di header, oppure null
+  numberCols = [],           // indici colonna da formattare come numero + centrare
+  freezeCols = 1,            // quante colonne congelare a sinistra
+  autofilter = false,
+}) {
+  const XLSX = window.XLSX;
+  const nCols = header.length;
+  const numberSet = new Set(numberCols);
+
+  // Costruisco l'intero foglio da A1 (riga 0 = titolo, riga 1 = sottotitolo,
+  // riga 2 = intestazioni, poi i dati). Così non dipendo dall'opzione "origin"
+  // di aoa_to_sheet: le celle vuote "" restano vuote ma esistono (per i bordi).
+  const aoa = [];
+  aoa.push([title]);
+  aoa.push([subtitle || `Generato il ${xlcGeneratedString()}`]);
+  aoa.push(header);
+  for (const row of dataRows) aoa.push(row);
+  if (totalsRow) aoa.push(totalsRow);
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Titolo e sottotitolo uniti su tutte le colonne
+  ws["!merges"] = ws["!merges"] || [];
+  ws["!merges"].push({ s: { r: 0, c: 0 }, e: { r: 0, c: Math.max(0, nCols - 1) } });
+  ws["!merges"].push({ s: { r: 1, c: 0 }, e: { r: 1, c: Math.max(0, nCols - 1) } });
+
+  const setStyle = (r, c, style) => {
+    const addr = XLSX.utils.encode_cell({ r, c });
+    if (!ws[addr]) ws[addr] = { t: "s", v: "" };
+    ws[addr].s = { ...(ws[addr].s || {}), ...style };
+    return ws[addr];
+  };
+
+  // Titolo
+  setStyle(0, 0, {
+    font: { bold: true, sz: 15, color: { rgb: XLC.titleFg } },
+    alignment: { vertical: "center", horizontal: "left", indent: 1 },
+    fill: { fgColor: { rgb: XLC.titleBg } },
+  });
+  // Sottotitolo
+  setStyle(1, 0, {
+    font: { italic: true, sz: 10, color: { rgb: XLC.subFg } },
+    alignment: { vertical: "center", horizontal: "left", indent: 1 },
+    fill: { fgColor: { rgb: XLC.subBg } },
+  });
+
+  const headerRow = 2;
+  const firstData = 3;
+  const lastData = firstData + dataRows.length - 1;
+  const totRow = totalsRow ? lastData + 1 : -1;
+
+  // Intestazioni
+  for (let c = 0; c < nCols; c++) {
+    setStyle(headerRow, c, {
+      font: { bold: true, color: { rgb: XLC.headFg } },
+      alignment: { horizontal: c === 0 ? "left" : "center", vertical: "center", wrapText: true, indent: c === 0 ? 1 : 0 },
+      fill: { fgColor: { rgb: XLC.headBg } },
+      border: xlcBorderAll(XLC.headBg),
+    });
+  }
+
+  // Corpo
+  for (let i = 0; i < dataRows.length; i++) {
+    const r = firstData + i;
+    const zebra = (i % 2 === 1);
+    for (let c = 0; c < nCols; c++) {
+      const isNum = numberSet.has(c);
+      const cell = setStyle(r, c, {
+        font: { color: { rgb: XLC.ink }, bold: c === 0 },
+        alignment: { horizontal: c === 0 ? "left" : (isNum ? "center" : "left"), vertical: "center", indent: c === 0 ? 1 : 0 },
+        fill: { fgColor: { rgb: zebra ? XLC.zebra : "FFFFFF" } },
+        border: xlcBorderAll(),
+      });
+      if (isNum && typeof cell.v === "number") { cell.z = "#,##0"; cell.t = "n"; }
+    }
+  }
+
+  // Riga Totale
+  if (totRow >= 0) {
+    for (let c = 0; c < nCols; c++) {
+      const isNum = numberSet.has(c);
+      const cell = setStyle(totRow, c, {
+        font: { bold: true, color: { rgb: XLC.totFg } },
+        alignment: { horizontal: c === 0 ? "left" : (isNum ? "center" : "left"), vertical: "center", indent: c === 0 ? 1 : 0 },
+        fill: { fgColor: { rgb: XLC.totBg } },
+        border: {
+          top: { style: "medium", color: { rgb: XLC.headBg } },
+          bottom: { style: "thin", color: { rgb: XLC.border } },
+          left: { style: "thin", color: { rgb: XLC.border } },
+          right: { style: "thin", color: { rgb: XLC.border } },
+        },
+      });
+      if (isNum && typeof cell.v === "number") { cell.z = "#,##0"; cell.t = "n"; }
+    }
+  }
+
+  // Larghezze colonne: prima colonna larga, colonne numeriche strette
+  const widths = header.map((h, c) => {
+    if (c === 0) {
+      let w = 16;
+      for (const row of dataRows) w = Math.max(w, String(row[0] ?? "").length + 3);
+      return { wch: Math.min(38, w) };
+    }
+    return { wch: Math.max(7, Math.min(14, String(h).length + 3)) };
+  });
+  ws["!cols"] = widths;
+
+  // Altezze righe titolo/sottotitolo
+  ws["!rows"] = ws["!rows"] || [];
+  ws["!rows"][0] = { hpt: 24 };
+  ws["!rows"][1] = { hpt: 16 };
+
+  // Nota: il "blocca riquadri" (freeze pane) non è supportato in scrittura da
+  // xlsx-js-style, quindi non lo impostiamo (verrebbe ignorato).
+
+  if (autofilter) {
+    ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: headerRow, c: 0 }, e: { r: headerRow, c: nCols - 1 } }) };
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, safeSheetName(sheetName));
+  return ws;
+}
+
+// API principale: costruisce e scarica il report consumi.
+// summaryPlaces: [{ place, pieces, products, topProduct }]
+// placeSheets:   [{ place, header:[...], productRows:[[name, ...months, total]], totalsRow:[...] }]
+function exportConsumptionReport({ filename, title, subtitle, summaryHeader, summaryRows, summaryTotalsRow, placeSheets = [] }) {
+  if (!window.XLSX) throw new Error("XLSX non disponibile (CDN non caricato).");
+  const XLSX = window.XLSX;
+  const wb = XLSX.utils.book_new();
+
+  // Foglio 1: Riepilogo (classifica luoghi)
+  xlcBuildMatrixSheet(wb, {
+    sheetName: "Riepilogo",
+    title,
+    subtitle,
+    header: summaryHeader,
+    dataRows: summaryRows,
+    totalsRow: summaryTotalsRow,
+    numberCols: [1, 2],
+    freezeCols: 1,
+    autofilter: true,
+  });
+
+  // Un foglio per luogo (prodotti x mesi)
+  const monthCols = [];
+  for (let c = 1; c <= 13; c++) monthCols.push(c); // Gen..Dic (1..12) + Totale (13)
+
+  // Nomi foglio unici: Excel tronca a 31 caratteri, quindi due luoghi con nome
+  // lungo simile potrebbero collidere e far fallire l'intero file. De-duplico.
+  const usedNames = new Set(["riepilogo"]);
+  const uniqueSheetName = (name) => {
+    let base = safeSheetName(name);
+    let candidate = base, i = 2;
+    while (usedNames.has(candidate.toLowerCase())) {
+      const suffix = ` (${i})`;
+      candidate = safeSheetName(base.slice(0, 31 - suffix.length) + suffix);
+      i++;
+    }
+    usedNames.add(candidate.toLowerCase());
+    return candidate;
+  };
+
+  for (const p of placeSheets) {
+    xlcBuildMatrixSheet(wb, {
+      sheetName: uniqueSheetName(p.place),
+      title: p.title,
+      subtitle: p.subtitle,
+      header: p.header,
+      dataRows: p.productRows,
+      totalsRow: p.totalsRow,
+      numberCols: monthCols,
+      freezeCols: 1,
+      autofilter: false,
+    });
+  }
+
+  if (typeof XLSX.writeFile === "function") {
+    XLSX.writeFile(wb, safeFilename(filename), { bookType: "xlsx", cellStyles: true });
+    return;
+  }
+  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true });
+  const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  downloadBlob(blob, safeFilename(filename));
+}
 

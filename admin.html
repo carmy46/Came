@@ -190,54 +190,71 @@
           <button class="btn small" type="button" data-admin-back>← Torna indietro</button>
         </div>
 
-        <details class="admin-filters-toggle" open>
-          <summary>Filtri prodotti</summary>
+        <!-- Barra periodo + azioni principali -->
+        <div class="po-toolbar card">
+          <div class="po-toolbar-period">
+            <label class="label" for="poFilterMonth">Mese di riferimento</label>
+            <input id="poFilterMonth" class="input" type="month" />
+          </div>
+          <div class="po-toolbar-actions">
+            <button id="adminProdConsumptionBtn" class="btn" type="button"
+              title="Excel dei consumi dell'intero anno: foglio riepilogo con la classifica dei luoghi + un foglio per luogo con i 12 mesi.">
+              📊 Report consumi <span class="po-btn-sub">anno</span>
+            </button>
+            <button id="adminProdExportXlsxBtn" class="btn ghost" type="button"
+              title="Excel degli ordini del mese selezionato, come sono filtrati qui sotto.">
+              Export ordini <span class="po-btn-sub">mese</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Indicatori del mese selezionato -->
+        <div class="po-kpis">
+          <div class="kpi">
+            <div class="kpi-label">Ordini</div>
+            <div class="kpi-value" id="poKpiOrders">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Pezzi</div>
+            <div class="kpi-value" id="poKpiPieces">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Luoghi serviti</div>
+            <div class="kpi-value" id="poKpiPlaces">—</div>
+          </div>
+          <div class="kpi kpi-wide">
+            <div class="kpi-label">Prodotto più richiesto</div>
+            <div class="kpi-value kpi-value-sm" id="poKpiTopProduct">—</div>
+          </div>
+        </div>
+
+        <!-- Filtri di ricerca (restringono solo l'elenco qui sotto) -->
+        <details class="admin-filters-toggle">
+          <summary>Filtri di ricerca</summary>
           <div class="filters card" style="margin-bottom:12px;">
-          <div class="grid2" style="margin-top:0;">
-            <div>
-              <label class="label">Mese (data ordine)</label>
-              <input id="poFilterMonth" class="input" type="month" />
+            <div class="grid2" style="margin-top:0;">
+              <div>
+                <label class="label">Cerca dipendente</label>
+                <input id="poFilterEmployee" class="input" type="text" placeholder="Es. Mario" />
+              </div>
+              <div>
+                <label class="label">Cerca luogo</label>
+                <input id="poFilterPlace" class="input" type="text" placeholder="Es. B&B..." />
+              </div>
             </div>
-            <div>
-              <label class="label">Cerca dipendente (nome)</label>
-              <input id="poFilterEmployee" class="input" type="text" placeholder="Es. Mario" />
+
+            <div class="grid2" style="margin-top:10px;">
+              <div>
+                <label class="label">Cerca prodotto</label>
+                <input id="poFilterProduct" class="input" type="text" placeholder="Es. Carta..." />
+              </div>
+              <div class="po-filter-actions">
+                <button id="poFiltersApply" class="btn small" type="button">Applica</button>
+                <button id="poFiltersReset" class="btn small ghost" type="button">Reset</button>
+              </div>
             </div>
-          </div>
 
-          <div class="grid2" style="margin-top:10px;">
-            <div>
-              <label class="label">Cerca luogo</label>
-              <input id="poFilterPlace" class="input" type="text" placeholder="Es. B&B..." />
-            </div>
-            <div>
-              <label class="label">Cerca prodotto</label>
-              <input id="poFilterProduct" class="input" type="text" placeholder="Es. Carta..." />
-            </div>
-          </div>
-
-          <div class="grid2" style="margin-top:10px;">
-            <button id="poFiltersReset" class="btn small" type="button">Reset filtri</button>
-            <button id="poFiltersApply" class="btn small" type="button">Applica</button>
-          </div>
-
-          <div class="grid2" style="margin-top:10px;">
-            <button id="adminProdExportXlsxBtn" class="btn small" type="button">Export Excel (ordini filtrati)</button>
-            <div></div>
-          </div>
-
-          <p class="muted" style="margin-top:10px;" id="poFiltersInfo"></p>
-
-          <div class="card" style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,.10);">
-            <label class="label" style="margin-top:0;">Report consumi (tutti i luoghi)</label>
-            <p class="muted" style="margin:0 0 10px;">
-              Usano il <strong>mese</strong> impostato qui sopra (il report annuale prende l'anno da quella data)
-              e ignorano gli altri filtri: mostrano sempre tutti i luoghi e tutti i dipendenti.
-            </p>
-            <div class="grid2">
-              <button id="adminProdMonthlyConsumptionBtn" class="btn small" type="button">📊 Consumo del mese</button>
-              <button id="adminProdAnnualConsumptionBtn" class="btn small" type="button">📊 Consumo dell'anno</button>
-            </div>
-          </div>
+            <p class="muted" style="margin-top:10px;" id="poFiltersInfo"></p>
           </div>
         </details>
 
@@ -381,7 +398,9 @@
   </div>
 
   <!-- Export libs -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- xlsx-js-style: fork di SheetJS che SCRIVE gli stili nel file (colori, bordi, grassetti).
+       La versione "xlsx" ufficiale li ignora in scrittura. Stesso API (window.XLSX). -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="js/export.js"></script>
 
   <script src="js/supabaseClient.js"></script>

@@ -874,10 +874,19 @@ function labelRequestType(t) {
   });
 })();
 
+function setProductKpis({ orders = "—", pieces = "—", places = "—", topProduct = "—" } = {}) {
+  const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = String(val); };
+  set("poKpiOrders", orders);
+  set("poKpiPieces", pieces);
+  set("poKpiPlaces", places);
+  set("poKpiTopProduct", topProduct);
+}
+
 async function loadProducts() {
   const el = document.getElementById("productsList");
   if (!el) return;
   el.textContent = "Caricamento...";
+  setProductKpis({ orders: "…", pieces: "…", places: "…", topProduct: "…" });
 
   const monthEl = document.getElementById("poFilterMonth");
   const employeeEl = document.getElementById("poFilterEmployee");
@@ -919,6 +928,7 @@ async function loadProducts() {
     if (error) {
       console.error(error);
       el.textContent = "Errore caricamento prodotti.";
+      setProductKpis({ orders: "—", pieces: "—", places: "—", topProduct: "—" });
       return;
     }
 
@@ -977,9 +987,10 @@ async function loadProducts() {
       return String(b.created_at || "").localeCompare(String(a.created_at || ""));
     });
 
+    const totalPieces = groups.reduce((acc, g) => acc + g.items.reduce((a2, it) => a2 + (Number(it.quantity) || 0), 0), 0);
+    const totalLines = groups.reduce((acc, g) => acc + g.items.length, 0);
+
     if (infoEl) {
-      const totalPieces = groups.reduce((acc, g) => acc + g.items.reduce((a2, it) => a2 + (Number(it.quantity) || 0), 0), 0);
-      const totalLines = groups.reduce((acc, g) => acc + g.items.length, 0);
       const parts = [`Mese: ${fmtMonthYear(month)}`, `Ordini: ${groups.length}`, `Righe: ${totalLines}`, `Pezzi: ${totalPieces}`];
       if (employeeQuery) parts.push(`Nome: "${employeeQuery}"`);
       if (placeQuery) parts.push(`Luogo: "${placeQuery}"`);
@@ -987,11 +998,32 @@ async function loadProducts() {
       infoEl.textContent = parts.join(" • ");
     }
 
+    // KPI del mese (riflettono i dati filtrati mostrati sotto)
+    const distinctPlaces = new Set(groups.map(g => String(g.place || "—"))).size;
+    const productTotals = new Map();
+    for (const g of groups) {
+      for (const it of g.items) {
+        const name = String(it.product_name || "").trim() || "—";
+        productTotals.set(name, (productTotals.get(name) || 0) + (Number(it.quantity) || 0));
+      }
+    }
+    let topProduct = "—", topQty = -1;
+    for (const [name, qty] of productTotals.entries()) {
+      if (qty > topQty) { topQty = qty; topProduct = name; }
+    }
+    setProductKpis({
+      orders: groups.length,
+      pieces: totalPieces,
+      places: distinctPlaces,
+      topProduct: groups.length ? `${topProduct} (${topQty})` : "—",
+    });
+
     // Salva per export (dati già filtrati come in UI)
     adminCurrentProductGroups = groups.slice();
 
     if (!groups || groups.length === 0) {
       el.textContent = "Nessun ordine prodotti in questo mese.";
+      setProductKpis({ orders: 0, pieces: 0, places: 0, topProduct: "—" });
       return;
     }
 
@@ -1791,84 +1823,20 @@ adminProdExportXlsxBtn?.addEventListener("click", () => {
 });
 
 // ============================
-// REPORT CONSUMI (admin): quanto materiale è stato ordinato per ogni luogo,
-// per vedere il consumo mensile/annuale. A differenza dell'export sopra,
-// ignora i filtri dipendente/luogo/prodotto: prende sempre tutti gli ordini
-// (consegnati o no) del mese/anno scelto, raggruppati per luogo e sommati per prodotto.
+// REPORT CONSUMI PRODOTTI (admin): un unico file Excel per l'ANNO scelto
+// (l'anno viene dal campo "Mese" dei filtri). Foglio "Riepilogo" con la
+// classifica dei luoghi per consumo + un foglio per luogo con i prodotti in
+// riga e i 12 mesi in colonna. Conta TUTTE le richieste inviate (consegnate
+// o no) e ignora gli altri filtri: sempre tutti i luoghi e tutti i dipendenti.
 // ============================
 
 const MONTH_LABELS_IT = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
 
-function groupProductOrdersByPlace(rows) {
-  // luogo -> prodotto -> quantità totale
-  const byPlace = new Map();
-  for (const r of rows) {
-    const place = String(r.place || "").trim() || "—";
-    const product = String(r.product_name || "").trim() || "—";
-    const qty = Number(r.quantity) || 0;
-
-    let products = byPlace.get(place);
-    if (!products) { products = new Map(); byPlace.set(place, products); }
-    products.set(product, (products.get(product) || 0) + qty);
-  }
-  return byPlace;
-}
-
-document.getElementById("adminProdMonthlyConsumptionBtn")?.addEventListener("click", async () => {
-  const btn = document.getElementById("adminProdMonthlyConsumptionBtn");
-  const month = (document.getElementById("poFilterMonth")?.value || getCurrentMonthISO()).trim(); // YYYY-MM
-  const monthLabel = fmtMonthYear(month);
-
-  const start = `${month}-01`;
-  const endDate = new Date(month + "-01T00:00:00");
-  endDate.setMonth(endDate.getMonth() + 1);
-  endDate.setDate(0);
-  const end = `${month}-${String(endDate.getDate()).padStart(2, "0")}`;
-
-  try {
-    if (btn) { btn.disabled = true; btn.textContent = "Genero..."; }
-
-    const { data, error } = await supabaseClient
-      .from("product_orders")
-      .select("place,product_name,quantity")
-      .gte("order_date", start)
-      .lte("order_date", end);
-
-    if (error) { console.error(error); alert("Errore nel caricamento dei dati per il report."); return; }
-    if (!data || data.length === 0) { alert(`Nessun ordine prodotti in ${monthLabel}.`); return; }
-
-    const byPlace = groupProductOrdersByPlace(data);
-    const places = Array.from(byPlace.keys()).sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }));
-
-    const sheets = places.map((place) => {
-      const rows = Array.from(byPlace.get(place).entries())
-        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "it", { sensitivity: "base" }))
-        .map(([product_name, qty]) => ({ "Prodotto": product_name, "Quantità": qty }));
-      return {
-        sheetName: place,
-        title: `Consumo ${monthLabel} – ${place}`,
-        columns: ["Prodotto", "Quantità"],
-        rows,
-      };
-    });
-
-    exportToExcelMultiSheet({
-      filename: `CAME_Consumo_Mensile_${fmtMonthYearFile(month)}.xlsx`,
-      sheets,
-    });
-  } catch (e) {
-    console.error(e);
-    alert("Errore imprevisto nella generazione del report.");
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = "📊 Consumo del mese"; }
-  }
-});
-
-document.getElementById("adminProdAnnualConsumptionBtn")?.addEventListener("click", async () => {
-  const btn = document.getElementById("adminProdAnnualConsumptionBtn");
+document.getElementById("adminProdConsumptionBtn")?.addEventListener("click", async () => {
+  const btn = document.getElementById("adminProdConsumptionBtn");
+  const origLabel = btn ? btn.innerHTML : "";
   const month = (document.getElementById("poFilterMonth")?.value || getCurrentMonthISO()).trim(); // YYYY-MM
   const year = month.slice(0, 4);
-
   const start = `${year}-01-01`;
   const end = `${year}-12-31`;
 
@@ -1900,35 +1868,66 @@ document.getElementById("adminProdAnnualConsumptionBtn")?.addEventListener("clic
       monthly[monthIdx] += qty;
     }
 
-    const places = Array.from(byPlace.keys()).sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }));
+    // Statistiche per luogo (per il Riepilogo e per l'ordinamento dei fogli)
+    const placeStats = Array.from(byPlace.entries()).map(([place, products]) => {
+      let pieces = 0, topProduct = "—", topQty = -1;
+      const monthlyTotals = new Array(12).fill(0);
+      for (const [name, monthly] of products.entries()) {
+        const t = monthly.reduce((a, b) => a + b, 0);
+        pieces += t;
+        monthly.forEach((q, i) => { monthlyTotals[i] += q; });
+        if (t > topQty) { topQty = t; topProduct = name; }
+      }
+      return { place, products, pieces, distinct: products.size, topProduct, monthlyTotals };
+    });
 
-    const sheets = places.map((place) => {
-      const rows = Array.from(byPlace.get(place).entries())
-        .map(([product_name, monthly]) => {
+    // Luoghi ordinati per consumo decrescente: Riepilogo e fogli seguono quest'ordine
+    placeStats.sort((a, b) => b.pieces - a.pieces || a.place.localeCompare(b.place, "it", { sensitivity: "base" }));
+
+    const grandPieces = placeStats.reduce((a, p) => a + p.pieces, 0);
+
+    // Foglio Riepilogo (classifica luoghi)
+    const summaryHeader = ["Luogo", "Pezzi (anno)", "Prodotti diversi", "Prodotto più usato"];
+    const summaryRows = placeStats.map(p => [p.place, p.pieces, p.distinct, p.topProduct]);
+    const summaryTotalsRow = ["TOTALE", grandPieces, "", ""];
+
+    // Un foglio per luogo: prodotti (righe) x 12 mesi + Totale
+    const placeSheets = placeStats.map(p => {
+      const productRows = Array.from(p.products.entries())
+        .map(([name, monthly]) => {
           const total = monthly.reduce((a, b) => a + b, 0);
-          const row = { "Prodotto": product_name };
-          MONTH_LABELS_IT.forEach((label, i) => { row[label] = monthly[i] || 0; });
-          row["Totale"] = total;
-          return row;
+          return [name, ...monthly.map(q => q || ""), total];
         })
-        .sort((a, b) => b["Totale"] - a["Totale"] || a["Prodotto"].localeCompare(b["Prodotto"], "it", { sensitivity: "base" }));
+        .sort((a, b) => (b[b.length - 1] - a[a.length - 1]) || String(a[0]).localeCompare(String(b[0]), "it", { sensitivity: "base" }));
+
+      const totalsRow = ["TOTALE MESE", ...p.monthlyTotals.map(q => q || ""), p.pieces];
+
       return {
-        sheetName: place,
-        title: `Consumo ${year} – ${place}`,
-        columns: ["Prodotto", ...MONTH_LABELS_IT, "Totale"],
-        rows,
+        place: p.place,
+        title: `Consumo ${year} — ${p.place}`,
+        subtitle: `${p.pieces} pezzi nell'anno • ${p.distinct} prodotti diversi`,
+        header: ["Prodotto", ...MONTH_LABELS_IT, "Totale"],
+        productRows,
+        totalsRow,
       };
     });
 
-    exportToExcelMultiSheet({
-      filename: `CAME_Consumo_Annuale_${year}.xlsx`,
-      sheets,
+    const genStr = new Intl.DateTimeFormat("it-IT", { dateStyle: "short", timeStyle: "short" }).format(new Date());
+
+    exportConsumptionReport({
+      filename: `CAME_Consumi_Prodotti_${year}.xlsx`,
+      title: `CAME — Consumi prodotti ${year}`,
+      subtitle: `Tutti i luoghi • ${placeStats.length} luoghi • ${grandPieces} pezzi totali • generato il ${genStr}`,
+      summaryHeader,
+      summaryRows,
+      summaryTotalsRow,
+      placeSheets,
     });
   } catch (e) {
     console.error(e);
     alert("Errore imprevisto nella generazione del report.");
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = "📊 Consumo dell'anno"; }
+    if (btn) { btn.disabled = false; btn.innerHTML = origLabel; }
   }
 });
 
