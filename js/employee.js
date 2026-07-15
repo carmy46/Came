@@ -156,38 +156,67 @@ function fillDatalist(listId, values) {
     .join("");
 }
 
-// Rigenera le righe prodotto nel carrello, tenendo sempre la riga "Altro" in fondo
-function renderProductRows(products) {
+function makeProductRow(name) {
+  const row = document.createElement("div");
+  row.className = "product-row";
+  row.setAttribute("data-po-item", name);
+  row.innerHTML =
+    `<div class="product-name">${escapeHtml(name)}</div>` +
+    `<input class="input product-qty" data-po-qty type="number" min="0" step="1" value="0" />`;
+  return row;
+}
+
+// Rigenera il carrello prodotti raggruppato per categoria (sezioni pieghevoli),
+// tenendo sempre la riga "Altro" in fondo, fuori dalle categorie.
+function renderProductRows(groupedProducts) {
   const cart = document.getElementById("poCart");
   if (!cart) return;
   const otherRow = cart.querySelector('.product-row[data-po-item="Altro"]');
 
-  // rimuovi le righe prodotto esistenti (tranne "Altro")
-  cart.querySelectorAll(".product-row").forEach((row) => {
-    if (row !== otherRow) row.remove();
+  // rimuovi tutto il contenuto precedente (categorie/righe), tranne "Altro"
+  Array.from(cart.children).forEach((child) => {
+    if (child !== otherRow) child.remove();
   });
 
-  // crea le nuove righe prima di "Altro"
+  // crea le sezioni per categoria prima di "Altro"
   const frag = document.createDocumentFragment();
-  for (const name of (products || [])) {
-    const row = document.createElement("div");
-    row.className = "product-row";
-    row.setAttribute("data-po-item", name);
-    row.innerHTML =
-      `<div class="product-name">${escapeHtml(name)}</div>` +
-      `<input class="input product-qty" data-po-qty type="number" min="0" step="1" value="0" />`;
-    frag.appendChild(row);
+  for (const group of (groupedProducts || [])) {
+    const acc = document.createElement("div");
+    acc.className = "acc product-acc";
+    acc.setAttribute("data-category", group.category);
+
+    const count = group.names.length;
+    const head = document.createElement("div");
+    head.className = "acc-head";
+    head.setAttribute("data-acc-toggle", "");
+    head.innerHTML =
+      `<div>
+        <div class="acc-title">${escapeHtml(group.category)}</div>
+        <div class="acc-meta">${count} prodott${count === 1 ? "o" : "i"}</div>
+      </div>
+      <span class="acc-chev">▾</span>`;
+
+    const body = document.createElement("div");
+    body.className = "acc-body";
+    for (const name of group.names) body.appendChild(makeProductRow(name));
+
+    acc.appendChild(head);
+    acc.appendChild(body);
+    frag.appendChild(acc);
   }
+
   if (otherRow) cart.insertBefore(frag, otherRow);
   else cart.appendChild(frag);
+
+  poApplySearch();
 }
 
-// Carica il catalogo dal DB e aggiorna liste prodotti/luoghi/attività
+// Carica il catalogo dal DB e aggiorna liste prodotti (raggruppati per categoria)/luoghi/attività
 async function loadCatalog() {
   try {
     const { data, error } = await supabaseClient
       .from("catalog_items")
-      .select("type,name")
+      .select("type,name,category")
       .eq("active", true)
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
@@ -197,16 +226,29 @@ async function loadCatalog() {
       return;
     }
 
-    const products = [];
+    const productGroups = []; // [{ category, names: [...] }], nell'ordine di comparsa
+    const groupIndexByCategory = new Map();
     const places = [];
     const activities = [];
+
     for (const it of (data || [])) {
-      if (it.type === "product") products.push(it.name);
-      else if (it.type === "place") places.push(it.name);
-      else if (it.type === "activity") activities.push(it.name);
+      if (it.type === "product") {
+        const cat = (it.category || "").trim() || "Altri prodotti";
+        let idx = groupIndexByCategory.get(cat);
+        if (idx === undefined) {
+          idx = productGroups.length;
+          groupIndexByCategory.set(cat, idx);
+          productGroups.push({ category: cat, names: [] });
+        }
+        productGroups[idx].names.push(it.name);
+      } else if (it.type === "place") {
+        places.push(it.name);
+      } else if (it.type === "activity") {
+        activities.push(it.name);
+      }
     }
 
-    renderProductRows(products);
+    renderProductRows(productGroups);
     fillDatalist("placesList", places);
     fillDatalist("activitiesList", activities);
   } catch (e) {
@@ -1080,10 +1122,28 @@ function poGetRows() {
 
 function poApplySearch() {
   const q = (poSearchEl?.value || "").trim().toLowerCase();
-  for (const row of poGetRows()) {
-    const name = String(row.getAttribute("data-po-item") || "").toLowerCase();
-    row.style.display = !q || name.includes(q) ? "grid" : "none";
-  }
+
+  // Per ogni categoria: mostra solo i prodotti che combaciano (o tutti, se combacia
+  // il nome della categoria), nascondi la categoria se non ha risultati e, mentre
+  // si cerca, aprila automaticamente così i risultati si vedono subito.
+  document.querySelectorAll(".product-acc").forEach((acc) => {
+    const categoryMatches = !!q && String(acc.getAttribute("data-category") || "").toLowerCase().includes(q);
+    let hasVisible = false;
+
+    acc.querySelectorAll(".product-row").forEach((row) => {
+      const name = String(row.getAttribute("data-po-item") || "").toLowerCase();
+      const visible = !q || categoryMatches || name.includes(q);
+      row.style.display = visible ? "grid" : "none";
+      if (visible) hasVisible = true;
+    });
+
+    acc.style.display = hasVisible ? "" : "none";
+    acc.classList.toggle("open", !!q && hasVisible);
+  });
+
+  // "Altro" è il campo libero: resta sempre visibile, non è dentro una categoria
+  const otherRow = document.querySelector('#poCart > .product-row[data-po-item="Altro"]');
+  if (otherRow) otherRow.style.display = "grid";
 }
 
 function poClearQuantities() {
@@ -1097,6 +1157,7 @@ function poClearQuantities() {
 function poFillVisibleOnes() {
   for (const row of poGetRows()) {
     if (row.style.display === "none") continue;
+    if (row.offsetParent === null) continue; // dentro una categoria chiusa: non è visibile
     const qtyEl = row.querySelector("[data-po-qty]");
     if (!qtyEl) continue;
     const v = Number(qtyEl.value || 0);

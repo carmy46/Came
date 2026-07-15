@@ -746,6 +746,12 @@ ul {
   text-align:center;
 }
 
+/* Prodotti raggruppati per categoria (accordion): spaziatura tra le righe
+   quando sono impilate dentro .acc-body invece che nella griglia diretta. */
+.product-row + .product-row{
+  margin-top:10px;
+}
+
 /* ============================= */
 /* ARCHIVIO - navigazione a card */
 /* ============================= */
@@ -2806,7 +2812,7 @@ body.page-admin .inline-editor{
   border-bottom: 1px solid var(--border);
 }
 .catalog-item:last-child{ border-bottom: none; }
-.catalog-item-main{ flex: 1 1 220px; display: flex; align-items: center; }
+.catalog-item-main{ flex: 1 1 220px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .catalog-item-main .catalog-name{ min-width: 160px; }
 .catalog-item-actions{ display: flex; gap: 6px; flex-wrap: wrap; }
 

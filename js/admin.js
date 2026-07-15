@@ -1791,6 +1791,148 @@ adminProdExportXlsxBtn?.addEventListener("click", () => {
 });
 
 // ============================
+// REPORT CONSUMI (admin): quanto materiale è stato ordinato per ogni luogo,
+// per vedere il consumo mensile/annuale. A differenza dell'export sopra,
+// ignora i filtri dipendente/luogo/prodotto: prende sempre tutti gli ordini
+// (consegnati o no) del mese/anno scelto, raggruppati per luogo e sommati per prodotto.
+// ============================
+
+const MONTH_LABELS_IT = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+
+function groupProductOrdersByPlace(rows) {
+  // luogo -> prodotto -> quantità totale
+  const byPlace = new Map();
+  for (const r of rows) {
+    const place = String(r.place || "").trim() || "—";
+    const product = String(r.product_name || "").trim() || "—";
+    const qty = Number(r.quantity) || 0;
+
+    let products = byPlace.get(place);
+    if (!products) { products = new Map(); byPlace.set(place, products); }
+    products.set(product, (products.get(product) || 0) + qty);
+  }
+  return byPlace;
+}
+
+document.getElementById("adminProdMonthlyConsumptionBtn")?.addEventListener("click", async () => {
+  const btn = document.getElementById("adminProdMonthlyConsumptionBtn");
+  const month = (document.getElementById("poFilterMonth")?.value || getCurrentMonthISO()).trim(); // YYYY-MM
+  const monthLabel = fmtMonthYear(month);
+
+  const start = `${month}-01`;
+  const endDate = new Date(month + "-01T00:00:00");
+  endDate.setMonth(endDate.getMonth() + 1);
+  endDate.setDate(0);
+  const end = `${month}-${String(endDate.getDate()).padStart(2, "0")}`;
+
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = "Genero..."; }
+
+    const { data, error } = await supabaseClient
+      .from("product_orders")
+      .select("place,product_name,quantity")
+      .gte("order_date", start)
+      .lte("order_date", end);
+
+    if (error) { console.error(error); alert("Errore nel caricamento dei dati per il report."); return; }
+    if (!data || data.length === 0) { alert(`Nessun ordine prodotti in ${monthLabel}.`); return; }
+
+    const byPlace = groupProductOrdersByPlace(data);
+    const places = Array.from(byPlace.keys()).sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }));
+
+    const sheets = places.map((place) => {
+      const rows = Array.from(byPlace.get(place).entries())
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "it", { sensitivity: "base" }))
+        .map(([product_name, qty]) => ({ "Prodotto": product_name, "Quantità": qty }));
+      return {
+        sheetName: place,
+        title: `Consumo ${monthLabel} – ${place}`,
+        columns: ["Prodotto", "Quantità"],
+        rows,
+      };
+    });
+
+    exportToExcelMultiSheet({
+      filename: `CAME_Consumo_Mensile_${fmtMonthYearFile(month)}.xlsx`,
+      sheets,
+    });
+  } catch (e) {
+    console.error(e);
+    alert("Errore imprevisto nella generazione del report.");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "📊 Consumo del mese"; }
+  }
+});
+
+document.getElementById("adminProdAnnualConsumptionBtn")?.addEventListener("click", async () => {
+  const btn = document.getElementById("adminProdAnnualConsumptionBtn");
+  const month = (document.getElementById("poFilterMonth")?.value || getCurrentMonthISO()).trim(); // YYYY-MM
+  const year = month.slice(0, 4);
+
+  const start = `${year}-01-01`;
+  const end = `${year}-12-31`;
+
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = "Genero..."; }
+
+    const { data, error } = await supabaseClient
+      .from("product_orders")
+      .select("place,product_name,quantity,order_date")
+      .gte("order_date", start)
+      .lte("order_date", end);
+
+    if (error) { console.error(error); alert("Errore nel caricamento dei dati per il report."); return; }
+    if (!data || data.length === 0) { alert(`Nessun ordine prodotti nel ${year}.`); return; }
+
+    // luogo -> prodotto -> [12 quantità mensili]
+    const byPlace = new Map();
+    for (const r of data) {
+      const place = String(r.place || "").trim() || "—";
+      const product = String(r.product_name || "").trim() || "—";
+      const qty = Number(r.quantity) || 0;
+      const monthIdx = Number(String(r.order_date).slice(5, 7)) - 1;
+      if (monthIdx < 0 || monthIdx > 11) continue;
+
+      let products = byPlace.get(place);
+      if (!products) { products = new Map(); byPlace.set(place, products); }
+      let monthly = products.get(product);
+      if (!monthly) { monthly = new Array(12).fill(0); products.set(product, monthly); }
+      monthly[monthIdx] += qty;
+    }
+
+    const places = Array.from(byPlace.keys()).sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }));
+
+    const sheets = places.map((place) => {
+      const rows = Array.from(byPlace.get(place).entries())
+        .map(([product_name, monthly]) => {
+          const total = monthly.reduce((a, b) => a + b, 0);
+          const row = { "Prodotto": product_name };
+          MONTH_LABELS_IT.forEach((label, i) => { row[label] = monthly[i] || 0; });
+          row["Totale"] = total;
+          return row;
+        })
+        .sort((a, b) => b["Totale"] - a["Totale"] || a["Prodotto"].localeCompare(b["Prodotto"], "it", { sensitivity: "base" }));
+      return {
+        sheetName: place,
+        title: `Consumo ${year} – ${place}`,
+        columns: ["Prodotto", ...MONTH_LABELS_IT, "Totale"],
+        rows,
+      };
+    });
+
+    exportToExcelMultiSheet({
+      filename: `CAME_Consumo_Annuale_${year}.xlsx`,
+      sheets,
+    });
+  } catch (e) {
+    console.error(e);
+    alert("Errore imprevisto nella generazione del report.");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "📊 Consumo dell'anno"; }
+  }
+});
+
+// ============================
 // CATALOGHI (admin): gestione prodotti / luoghi / attività
 // Tabella catalog_items. Solo l'admin può modificare (regole RLS).
 // ============================
@@ -1815,7 +1957,7 @@ async function loadCatalogAdmin() {
   try {
     const { data, error } = await supabaseClient
       .from("catalog_items")
-      .select("id,name,active,sort_order")
+      .select("id,name,active,sort_order,category")
       .eq("type", catalogCurrentType)
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
@@ -1837,10 +1979,23 @@ function renderCatalogList(items) {
     catalogListEl.innerHTML = `<p class="muted">Nessuna voce. Aggiungine una qui sopra.</p>`;
     return;
   }
-  catalogListEl.innerHTML = items.map((it, idx) => `
+
+  const isProduct = catalogCurrentType === "product";
+
+  // Datalist con le categorie già usate, per suggerirle mentre si scrive
+  // (restano comunque testo libero: si può scrivere una categoria nuova).
+  const categoryOptionsHtml = isProduct
+    ? Array.from(new Set(items.map(it => (it.category || "").trim()).filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }))
+        .map(c => `<option value="${escapeHtml(c)}"></option>`)
+        .join("")
+    : "";
+
+  const listHtml = items.map((it, idx) => `
     <div class="catalog-item">
       <div class="catalog-item-main">
         <input class="input catalog-name" data-id="${it.id}" value="${escapeHtml(it.name)}" />
+        ${isProduct ? `<input class="input" list="catalogCategoryList" data-cat-category="${it.id}" style="max-width:170px; margin-left:8px;" placeholder="Categoria..." value="${escapeHtml(it.category || "")}" />` : ""}
         ${it.active ? "" : `<span class="pill" style="margin-left:8px;">nascosto</span>`}
       </div>
       <div class="catalog-item-actions">
@@ -1852,6 +2007,8 @@ function renderCatalogList(items) {
       </div>
     </div>
   `).join("");
+
+  catalogListEl.innerHTML = (isProduct ? `<datalist id="catalogCategoryList">${categoryOptionsHtml}</datalist>` : "") + listHtml;
   bindCatalogActions(items);
 }
 
@@ -1871,6 +2028,21 @@ function bindCatalogActions(items) {
       }
       setCatalogMsg("Nome salvato ✅", "ok");
       await loadCatalogAdmin();
+    });
+  });
+
+  // Categoria (solo prodotti): autosalvataggio al cambio, come la data di consegna in Prodotti
+  catalogListEl.querySelectorAll("[data-cat-category]").forEach((input) => {
+    input.addEventListener("change", async () => {
+      const id = input.getAttribute("data-cat-category");
+      const category = (input.value || "").trim() || null;
+      const { error } = await supabaseClient.from("catalog_items").update({ category }).eq("id", id);
+      if (error) {
+        console.error(error);
+        setCatalogMsg("Errore nel salvataggio della categoria.", "error");
+        return;
+      }
+      setCatalogMsg("Categoria salvata ✅", "ok");
     });
   });
 
