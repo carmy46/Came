@@ -1037,7 +1037,13 @@ async function loadProducts() {
 
     const days = Array.from(byDay.entries()).sort(([a],[b]) => String(b).localeCompare(String(a)));
 
-    const allRowsHtml = days.map(([day, dayGroups]) => {
+    const weekdayFmt = new Intl.DateTimeFormat("it-IT", { weekday: "short" });
+    const weekdayOf = (isoDay) => {
+      const d = new Date(isoDay + "T00:00:00");
+      return isNaN(d.getTime()) ? "" : weekdayFmt.format(d).replace(".", "");
+    };
+
+    const daysHtml = days.map(([day, dayGroups]) => {
       const sorted = (dayGroups || []).slice().sort((a, b) => {
         const an = String(a.full_name || "").toLowerCase();
         const bn = String(b.full_name || "").toLowerCase();
@@ -1049,50 +1055,67 @@ async function loadProducts() {
         acc + gg.items.reduce((a2, it) => a2 + (Number(it.quantity) || 0), 0)
       , 0);
 
-      const header = `
-        <div class="rowItem rowGroup">
-          <div><strong>${escapeHtml(formatDateIT(day))}</strong></div>
-          <div class="muted">${escapeHtml(String(sorted.length))} ordine/i</div>
-          <div style="text-align:right;">${escapeHtml(String(dayPieces))} pz</div>
-        </div>
-      `;
-
-      const lines = sorted.map(g => {
+      const ordersHtml = sorted.map(g => {
         const pieces = g.items.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
-        const itemsShort = g.items.map(it => `${it.product_name} (${it.quantity})`).join(", ");
+        const chips = g.items
+          .map(it => `<span class="po-chip">${escapeHtml(it.product_name)} <b>×${escapeHtml(String(it.quantity))}</b></span>`)
+          .join("");
 
         const placeEnc = encodeURIComponent(g.place || "");
         const deliveryVal = g.delivery_date ? String(g.delivery_date).slice(0, 10) : "";
+        const delivered = !!g.delivery_date;
+        const statusHtml = delivered
+          ? `<span class="po-status po-status--done">Consegnato</span>`
+          : `<span class="po-status po-status--pending">Da consegnare</span>`;
 
         return `
-          <div class="rowItem">
-            <div>
-              <strong>${escapeHtml(g.full_name || "Senza nome")}</strong>
-              <div class="muted">${escapeHtml(g.place || "—")} • ${escapeHtml(String(pieces))} pz</div>
+          <div class="po-order">
+            <div class="po-order-who">
+              <div class="po-order-name">${escapeHtml(g.full_name || "Senza nome")}</div>
+              <div class="po-order-place">${escapeHtml(g.place || "—")} · ${escapeHtml(String(pieces))} pz</div>
             </div>
-            <div class="muted">${escapeHtml(itemsShort)}</div>
-            <div>
-              <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
-                <input
-                  class="input"
-                  type="date"
-                  style="max-width: 160px;"
-                  data-po-delivery-input
-                  data-user-id="${escapeHtml(g.userId)}"
-                  data-order-date="${escapeHtml(String(g.order_date))}"
-                  data-place="${escapeHtml(placeEnc)}"
-                  value="${escapeHtml(deliveryVal)}"
-                />
-              </div>
+            <div class="po-order-items">${chips}</div>
+            <div class="po-order-deliver">
+              ${statusHtml}
+              <input
+                class="input po-deliver-input"
+                type="date"
+                aria-label="Data consegna"
+                data-po-delivery-input
+                data-user-id="${escapeHtml(g.userId)}"
+                data-order-date="${escapeHtml(String(g.order_date))}"
+                data-place="${escapeHtml(placeEnc)}"
+                value="${escapeHtml(deliveryVal)}"
+              />
             </div>
           </div>
         `;
       }).join("");
 
-      return header + lines;
+      return `
+        <div class="po-day">
+          <div class="po-day-head">
+            <div class="po-day-date">${escapeHtml(weekdayOf(day))} ${escapeHtml(formatDateIT(day))}</div>
+            <div class="po-day-sum">
+              <span>${escapeHtml(String(sorted.length))} ordine${sorted.length === 1 ? "" : "i"}</span>
+              <span class="po-day-pz">${escapeHtml(String(dayPieces))} pz</span>
+            </div>
+          </div>
+          ${ordersHtml}
+        </div>
+      `;
     }).join("");
 
-    el.innerHTML = `<div class="dayCard"><div class="rows">${allRowsHtml}</div></div>`;
+    el.innerHTML = `
+      <div class="po-table">
+        <div class="po-colhead">
+          <div>Dipendente · Luogo</div>
+          <div>Prodotti</div>
+          <div>Consegna</div>
+        </div>
+        ${daysHtml}
+      </div>
+    `;
 
     // Bind consegna: autosalvataggio quando cambi la data
     const saveTimers = new Map(); // key -> timer

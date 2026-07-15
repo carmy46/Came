@@ -2994,3 +2994,106 @@ body.page-admin .po-filter-actions{
   body.page-admin .po-toolbar-actions{ width:100%; }
   body.page-admin .po-toolbar-actions .btn{ flex:1 1 auto; }
 }
+
+/* =====================================================================
+   Prodotti (admin) - elenco ordini: tabella elegante raggruppata per giorno.
+   Classi dedicate (.po-*) per non toccare le liste ore/richieste condivise.
+   ===================================================================== */
+body.page-admin .po-table{
+  border:1px solid var(--admin-stroke);
+  border-radius:16px;
+  overflow:hidden;
+  background:var(--admin-panel2);
+}
+
+/* intestazione colonne: nascosta su mobile, griglia su desktop */
+body.page-admin .po-colhead{ display:none; }
+
+/* giorno */
+body.page-admin .po-day + .po-day{ border-top:1px solid var(--admin-stroke); }
+body.page-admin .po-day-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 16px;
+  background:rgba(255,255,255,.035);
+}
+body.page-admin .po-day-date{
+  font-family:'Space Grotesk', system-ui, sans-serif;
+  font-weight:800;
+  letter-spacing:.2px;
+  font-size:14px;
+  text-transform:capitalize;
+}
+body.page-admin .po-day-sum{
+  display:flex; align-items:center; gap:10px;
+  font-size:12.5px; color:var(--muted);
+}
+body.page-admin .po-day-pz{
+  font-weight:800;
+  color:var(--accent2);
+  background:rgba(95,201,232,.14);
+  padding:2px 10px;
+  border-radius:999px;
+}
+
+/* ordine (riga) */
+body.page-admin .po-order{
+  padding:12px 16px;
+  border-top:1px solid rgba(255,255,255,.06);
+  display:grid;
+  gap:10px;
+}
+body.page-admin .po-order-name{ font-weight:800; }
+body.page-admin .po-order-place{ color:var(--muted); font-size:12.5px; margin-top:2px; }
+
+/* chips prodotti */
+body.page-admin .po-order-items{ display:flex; flex-wrap:wrap; gap:6px; align-content:flex-start; }
+body.page-admin .po-chip{
+  font-size:12.5px;
+  padding:3px 9px;
+  border-radius:8px;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--admin-stroke);
+  white-space:nowrap;
+}
+body.page-admin .po-chip b{ font-weight:800; color:var(--accent2); }
+
+/* consegna */
+body.page-admin .po-order-deliver{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+body.page-admin .po-status{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.3px;
+  text-transform:uppercase;
+  padding:3px 9px;
+  border-radius:999px;
+  white-space:nowrap;
+}
+body.page-admin .po-status--done{ color:#08211d; background:var(--accent2); }
+body.page-admin .po-status--pending{ color:#2a1e05; background:var(--amber); }
+body.page-admin .po-deliver-input{ max-width:170px; }
+
+/* desktop: tabella a colonne allineate (colhead + righe stessa griglia) */
+@media (min-width: 860px){
+  body.page-admin .po-colhead{
+    display:grid;
+    grid-template-columns: minmax(180px,1.3fr) minmax(220px,2fr) 220px;
+    gap:14px;
+    padding:12px 16px;
+    background:rgba(255,255,255,.05);
+    border-bottom:1px solid var(--admin-stroke);
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  body.page-admin .po-order{
+    grid-template-columns: minmax(180px,1.3fr) minmax(220px,2fr) 220px;
+    align-items:center;
+  }
+  body.page-admin .po-order:hover{ background:rgba(255,255,255,.03); }
+  body.page-admin .po-order-deliver{ justify-content:flex-end; }
+}
