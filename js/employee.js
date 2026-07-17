@@ -1030,6 +1030,9 @@ function startEditWorkLog(rowItemEl) {
   editor.className = "inline-editor";
   editor.setAttribute("data-worklog-editor", "1");
   editor.innerHTML = `
+    <label class="label">Data</label>
+    <input class="input" type="date" data-e="work_date" value="${escapeHtml(r.work_date || "")}" />
+
     <div class="grid2">
       <div>
         <label class="label">Ora inizio</label>
@@ -1115,6 +1118,7 @@ function startEditWorkLog(rowItemEl) {
       msg("");
       if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "Salvo..."; }
 
+      const work_date = (editor.querySelector('[data-e="work_date"]')?.value || "").trim();
       const start_time = (editor.querySelector('[data-e="start_time"]')?.value || "").trim();
       const end_time = (editor.querySelector('[data-e="end_time"]')?.value || "").trim();
       const break_start = (editor.querySelector('[data-e="break_start"]')?.value || "").trim() || null;
@@ -1122,6 +1126,10 @@ function startEditWorkLog(rowItemEl) {
       const location = (editor.querySelector('[data-e="location"]')?.value || "").trim();
       const activity = (editor.querySelector('[data-e="activity"]')?.value || "").trim();
 
+      if (!work_date) {
+        msg("Seleziona la data.", "error");
+        return;
+      }
       if (!location || !activity) {
         msg("Compila luogo e attività.", "error");
         return;
@@ -1132,7 +1140,7 @@ function startEditWorkLog(rowItemEl) {
 
       const { error } = await supabaseClient
         .from("work_logs")
-        .update({ start_time, end_time, break_start, break_end, location, activity })
+        .update({ work_date, start_time, end_time, break_start, break_end, location, activity })
         .eq("id", id);
 
       if (error) {
@@ -1142,7 +1150,18 @@ function startEditWorkLog(rowItemEl) {
       }
 
       msg("Salvato ✅", "ok");
-      showToast("Ore modificate ✅", "ok");
+
+      // Se la data corretta cade in un altro mese, la registrazione esce dal mese
+      // mostrato: sposto la vista sul nuovo mese così l'utente la ritrova subito.
+      const newMonth = String(work_date).slice(0, 7); // "YYYY-MM"
+      const shownMonth = (monthPicker?.value || "").slice(0, 7);
+      if (newMonth && shownMonth && newMonth !== shownMonth) {
+        if (monthPicker) monthPicker.value = newMonth;
+        try { updateMonthPickerLabel(); } catch (_) {}
+        showToast(`Registrazione spostata al ${formatDateIT(work_date)}`, "ok");
+      } else {
+        showToast("Ore modificate ✅", "ok");
+      }
       await loadArchive();
     } catch (err) {
       console.error(err);
