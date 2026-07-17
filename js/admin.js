@@ -1890,20 +1890,20 @@ adminProdExportXlsxBtn?.addEventListener("click", () => {
     return String(a.place || "").localeCompare(String(b.place || ""), "it", { sensitivity: "base" });
   });
 
-  const columns = ["Dipendente", "Data ordine", "Luogo", "Data consegna", "Prodotti", "Righe", "Pezzi"];
+  const columns = ["Dipendente", "Data ordine", "Luogo", "Data consegna", "Prodotto", "Quantità"];
 
-  const rows = sorted.map(g => {
-    const items = (g.items || []).map(it => `${it.product_name} x${it.quantity}`).join(", ");
-    const pieces = (g.items || []).reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
-    return {
+  const rows = sorted.flatMap(g => {
+    const base = {
       "Dipendente": g.full_name || "",
       "Data ordine": g.order_date ? formatDateIT(g.order_date) : "",
       "Luogo": g.place || "",
       "Data consegna": g.delivery_date ? formatDateIT(String(g.delivery_date).slice(0, 10)) : "",
-      "Prodotti": items,
-      "Righe": String((g.items || []).length),
-      "Pezzi": String(pieces),
     };
+    return (g.items || []).map(it => ({
+      ...base,
+      "Prodotto": it.product_name,
+      "Quantità": String(it.quantity),
+    }));
   });
 
   const totalPieces = sorted.reduce((acc, g) => acc + (g.items || []).reduce((a2, it) => a2 + (Number(it.quantity) || 0), 0), 0);
