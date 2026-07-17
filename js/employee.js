@@ -738,13 +738,11 @@ function setArchiveSection(section) {
     if (el) el.classList.toggle("active", s === section);
   });
 
-  // Su smartphone: mostra i filtri solo nella sezione "Ore" (riduce la pagina lunga).
-  // Su PC/desktop: i filtri devono restare sempre visibili.
-  const filtersCard = document.getElementById("archiveFiltersCard");
-  if (filtersCard) {
-    const isMobile = window.matchMedia && window.matchMedia("(max-width: 520px)").matches;
-    filtersCard.style.display = (!isMobile || section === "hours") ? "" : "none";
-  }
+  // Segna la sezione attiva sullo shell: il CSS lo usa per mostrare i controlli
+  // specifici delle Ore (statistiche + export) SOLO nella sezione Ore, tenendo
+  // invece il filtro mese sempre visibile in tutte le sezioni (niente più "Cambia mese").
+  const shell = document.querySelector("#view-archive .archive-shell");
+  if (shell) shell.setAttribute("data-active-archive", section);
 
   // Mobile UX: quando cambi sottosezione in Archivio vai in alto,
   // così non resti “in mezzo” e non intravedi contenuti della sezione precedente.
@@ -984,15 +982,6 @@ function initArchiveToolbar() {
     });
   });
 
-  // Shortcut mobile: "Cambia mese" (porta a Ore e mostra i filtri)
-  document.querySelectorAll("[data-archive-month-shortcut]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      setArchiveSection("hours");
-      const fc = document.getElementById("archiveFiltersCard");
-      fc?.scrollIntoView({ behavior: "smooth", block: "start" });
-      document.getElementById("monthPicker")?.focus?.();
-    });
-  });
 }
 
 function applyArchiveSearch() {

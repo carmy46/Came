@@ -173,7 +173,7 @@
       <h3>Archivio personale</h3>
 
       <div class="archive-wrap">
-        <div class="archive-shell">
+        <div class="archive-shell" data-active-archive="hours">
           <div class="archive-topbar">
             <div class="card archive-nav">
               <div class="archive-nav-title">Sezioni</div>
@@ -221,7 +221,7 @@
                     </div>
                   </details>
 
-                  <div class="archive-stats-inline">
+                  <div class="archive-stats-inline archive-only-hours">
                     <div class="statPill">
                       <div class="muted">Totale mese</div>
                       <div id="monthTotal" class="statValue">—</div>
@@ -233,7 +233,7 @@
                   </div>
 
                   <div class="archive-more">
-                    <div class="grid2 archive-actions">
+                    <div class="grid2 archive-actions archive-only-hours">
                       <button id="exportXlsxBtn" class="btn small" type="button">Export Excel</button>
                       <button id="exportPdfBtn" class="btn small" type="button">Export PDF</button>
                     </div>
@@ -267,9 +267,6 @@
                   <div class="archive-section-title">Richieste</div>
                   <div class="archive-section-sub muted">Gestione e storico</div>
                 </div>
-                <div class="archive-mobile-shortcut">
-                  <button class="btn small" type="button" data-archive-month-shortcut>📅 Cambia mese</button>
-                </div>
                 <div class="chips archive-subfilters">
                   <button class="chip active" type="button" data-req-filter="all">Tutte</button>
                   <button class="chip" type="button" data-req-filter="pending">In attesa</button>
@@ -286,9 +283,6 @@
                 <div class="archive-section-head">
                   <div class="archive-section-title">Prodotti</div>
                   <div class="archive-section-sub muted">Ordini e consegne</div>
-                </div>
-                <div class="archive-mobile-shortcut">
-                  <button class="btn small" type="button" data-archive-month-shortcut>📅 Cambia mese</button>
                 </div>
                 <div class="chips archive-subfilters">
                   <button class="chip active" type="button" data-po-filter="all">Tutti</button>

@@ -1308,6 +1308,101 @@ ul {
   .archive-toolbar{margin-top: 8px; gap:8px;}
 }
 
+/* ============================================================= */
+/* ARCHIVIO MOBILE — segmented control sticky + filtri compatti   */
+/* Migliora navigazione e ingombro filtri su smartphone.          */
+/* Il layout desktop (min-width:900px) resta invariato.           */
+/* ============================================================= */
+.page-employee{ --emp-header-h: 64px; }
+
+@media (max-width: 640px){
+  /* Statistiche + export ore: visibili SOLO nella sezione Ore (desktop invariato) */
+  .archive-shell[data-active-archive]:not([data-active-archive="hours"]) .archive-only-hours{
+    display: none !important;
+  }
+
+  /* Barra navigazione + filtri: fissa in cima mentre si scorre la lista */
+  #view-archive .archive-topbar{
+    position: sticky;
+    top: var(--emp-header-h);
+    z-index: 20;
+    display: block;
+    margin: 0 0 12px;
+    padding: 8px 0 2px;
+    background: rgba(10,18,34,.88);
+    backdrop-filter: blur(10px);
+  }
+
+  /* --- Segmented control (Ore / Richieste / Prodotti) --- */
+  #view-archive .archive-nav{
+    padding: 0;
+    margin-bottom: 8px;
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+  #view-archive .archive-nav-title{ display: none; } /* "Sezioni" superfluo su telefono */
+  #view-archive .archive-nav .archive-cards{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin: 0;
+    padding: 4px;
+    overflow: visible;                 /* annulla lo scroll orizzontale precedente */
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 14px;
+    scroll-snap-type: none;
+  }
+  #view-archive .archive-nav .archive-card{
+    min-width: 0;                      /* annulla il min-width dello scroll */
+    max-width: none;
+    flex: unset;
+    min-height: 0;
+    padding: 9px 6px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    transition: background-color .12s ease;
+  }
+  #view-archive .archive-nav .archive-card.active{
+    background: rgba(110,168,254,.20);
+    border: 0;
+    padding-left: 6px;                 /* annulla lo slittamento della barra laterale */
+  }
+  #view-archive .archive-card.active::before{ display: none; } /* niente barra laterale nel segmented */
+  #view-archive .archive-card-sub{ display: none; }            /* compattezza */
+  #view-archive .archive-card-row{ justify-content: center; gap: 6px; }
+  #view-archive .archive-card-title{ font-size: 13px; font-weight: 800; }
+  #view-archive .archive-card .badge{
+    min-width: 0;
+    padding: 1px 7px;
+    font-size: 11px;
+  }
+
+  /* --- Barra filtri compatta: il mese resta sempre a portata --- */
+  #view-archive #archiveFiltersCard.filters.card{
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  #view-archive .archive-filters-toggle > summary{
+    min-height: 46px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+  /* Le sezioni non devono finire sotto la barra sticky quando ci si arriva via scroll */
+  #view-archive .archive-section{ scroll-margin-top: calc(var(--emp-header-h) + 120px); }
+}
+
 /* ============================= */
 /* HOME cards */
 /* ============================= */
