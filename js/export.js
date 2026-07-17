@@ -184,7 +184,8 @@ function exportToExcelElegant({
   title = "CAME",
   columns = [],           // array di header in ordine
   rows = [],              // array di oggetti (chiavi = columns) oppure array di array
-  summary = null          // opzionale: { title: "...", rows: [{...}] } crea foglio riepilogo
+  summary = null,         // opzionale: { title: "...", rows: [{...}] } crea foglio riepilogo
+  mergeColumns = []       // opzionale: colonne dove unire verticalmente righe consecutive con lo stesso valore
 }) {
   if (!window.XLSX) throw new Error("XLSX non disponibile (CDN non caricato).");
 
@@ -279,6 +280,42 @@ function exportToExcelElegant({
 
   // Auto-fit colonne
   autoFitColumns(ws, [columns, ...dataObjects.map(o => columns.map(k => o[k]))], 10, 48);
+
+  // Unisci verticalmente le righe consecutive con lo stesso valore (es. stesso
+  // dipendente su più righe prodotto): il nome compare una sola volta invece
+  // di ripetersi a ogni riga.
+  for (const colName of mergeColumns) {
+    const colIndex = columns.indexOf(colName);
+    if (colIndex < 0) continue;
+
+    let runStart = 0;
+    while (runStart < dataObjects.length) {
+      const value = dataObjects[runStart][colName];
+      let runEnd = runStart;
+      while (runEnd + 1 < dataObjects.length && dataObjects[runEnd + 1][colName] === value) runEnd++;
+
+      if (runEnd > runStart) {
+        const rStart = bodyStartRow + runStart;
+        const rEnd = bodyStartRow + runEnd;
+        ws["!merges"] = ws["!merges"] || [];
+        ws["!merges"].push({ s: { r: rStart, c: colIndex }, e: { r: rEnd, c: colIndex } });
+
+        // svuota le celle successive alla prima (il merge le nasconde comunque,
+        // ma così anche i lettori che non supportano i merge non ripetono il testo)
+        for (let r = runStart + 1; r <= runEnd; r++) {
+          const addr = XLSX.utils.encode_cell({ r: bodyStartRow + r, c: colIndex });
+          if (ws[addr]) ws[addr].v = "";
+        }
+
+        const anchorAddr = XLSX.utils.encode_cell({ r: rStart, c: colIndex });
+        if (ws[anchorAddr]) {
+          ws[anchorAddr].s = { ...(ws[anchorAddr].s || {}), alignment: { ...(ws[anchorAddr].s?.alignment || {}), vertical: "center" } };
+        }
+      }
+
+      runStart = runEnd + 1;
+    }
+  }
 
   // Filtro su header (riga 3)
   ws["!autofilter"] = {

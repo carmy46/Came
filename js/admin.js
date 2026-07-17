@@ -1922,7 +1922,8 @@ adminProdExportXlsxBtn?.addEventListener("click", () => {
     title: `CAME – Prodotti (Admin) ${monthLabel}`,
     columns,
     rows,
-    summary: { title: `Riepilogo Prodotti ${monthLabel}`, rows: summaryRows }
+    summary: { title: `Riepilogo Prodotti ${monthLabel}`, rows: summaryRows },
+    mergeColumns: ["Dipendente"]
   });
 });
 
