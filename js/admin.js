@@ -2253,7 +2253,8 @@ catalogAddBtn?.addEventListener("click", async () => {
 // Riusa il click sul pulsante di navigazione (che cambia vista e ricarica i dati).
 window.CameNotifRouter = function (n) {
   const t = n && n.type;
-  const view = (t === "order_new") ? "products" : "requests"; // request_new / request_modified -> Richieste
+  // ordini (nuovo / annullato) -> Prodotti; richieste (nuova / modificata) -> Richieste
+  const view = (t === "order_new" || t === "order_cancelled") ? "products" : "requests";
   const btn = document.querySelector('.nav-btn[data-view="' + view + '"]');
   if (btn) { btn.click(); return; }
   // fallback: attiva la vista direttamente
