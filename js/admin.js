@@ -2249,4 +2249,20 @@ catalogAddBtn?.addEventListener("click", async () => {
   }
 });
 
+// Router notifiche (admin): al click su una notifica apre la vista giusta.
+// Riusa il click sul pulsante di navigazione (che cambia vista e ricarica i dati).
+window.CameNotifRouter = function (n) {
+  const t = n && n.type;
+  const view = (t === "order_new") ? "products" : "requests"; // request_new / request_modified -> Richieste
+  const btn = document.querySelector('.nav-btn[data-view="' + view + '"]');
+  if (btn) { btn.click(); return; }
+  // fallback: attiva la vista direttamente
+  try {
+    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+    document.getElementById("view-" + view)?.classList.add("active");
+    if (view === "products" && typeof loadProducts === "function") loadProducts();
+    if (view === "requests" && typeof loadRequests === "function") loadRequests();
+  } catch (_) {}
+};
+
 

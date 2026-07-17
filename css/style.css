@@ -3316,6 +3316,29 @@ body.page-admin .po-deliver-input{ max-width:170px; }
 .notif-body{ font-size: 12.5px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
 .notif-time{ font-size: 11px; color: var(--muted); margin-top: 5px; opacity: .8; }
 
-@media (max-width: 420px){
-  .notif-panel{ right: -6px; width: calc(100vw - 20px); }
+.notif-item{ cursor: pointer; transition: background-color .12s ease; }
+.notif-item:hover{ background: rgba(255,255,255,.05); }
+.notif-item:focus-visible{ outline: none; box-shadow: 0 0 0 3px rgba(110,168,254,.25) inset; }
+
+/* Animazione campanella all'arrivo di una notifica in tempo reale */
+@keyframes notifRing {
+  0%,100% { transform: rotate(0); }
+  15% { transform: rotate(16deg); }
+  30% { transform: rotate(-14deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  75% { transform: rotate(4deg); }
+}
+.notif-bell.ring .notif-ico{ display: inline-block; animation: notifRing 1s ease; transform-origin: 50% 12%; }
+
+/* Smartphone: il pannello è ancorato allo schermo (fixed) così si vede sempre intero */
+@media (max-width: 640px){
+  .notif-panel{
+    position: fixed;
+    top: 62px;              /* subito sotto la topbar */
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-height: calc(100vh - 76px);
+  }
 }

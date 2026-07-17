@@ -1200,6 +1200,13 @@ try {
   });
 } catch (_) {}
 
+// Router notifiche (dipendente): al click su una notifica va alla sezione giusta dell'Archivio
+window.CameNotifRouter = function (n) {
+  const t = n && n.type;
+  const section = (t === "order_delivered") ? "products" : "requests"; // request_decided -> Richieste
+  try { goToArchiveAndRefresh({ section }); } catch (_) {}
+};
+
 // ============================
 // RICHIESTE (dipendente)
 // ============================

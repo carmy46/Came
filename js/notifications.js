@@ -67,6 +67,17 @@
     bellEl.addEventListener("click", (e) => { e.stopPropagation(); togglePanel(); });
     rootEl.querySelector(".notif-mark").addEventListener("click", (e) => { e.stopPropagation(); markAllRead(); });
 
+    // click / invio su una voce -> naviga
+    listEl.addEventListener("click", (e) => {
+      const item = e.target.closest?.(".notif-item");
+      if (item) openNotif(item.getAttribute("data-id"));
+    });
+    listEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const item = e.target.closest?.(".notif-item");
+      if (item) { e.preventDefault(); openNotif(item.getAttribute("data-id")); }
+    });
+
     // click fuori => chiudi
     document.addEventListener("click", (e) => {
       if (!panelEl || panelEl.hidden) return;
@@ -93,12 +104,22 @@
     listEl.innerHTML = items.map(n => {
       const unread = !n.read_at ? " unread" : "";
       const body = n.body ? `<div class="notif-body">${escapeHtml(n.body)}</div>` : "";
-      return `<div class="notif-item${unread}">` +
+      return `<div class="notif-item${unread}" data-id="${escapeHtml(String(n.id))}" role="button" tabindex="0">` +
         `<div class="notif-title">${escapeHtml(n.title || "")}</div>` +
         body +
         `<div class="notif-time">${escapeHtml(timeAgo(n.created_at))}</div>` +
       `</div>`;
     }).join("");
+  }
+
+  // Click su una notifica -> vai alla pagina di riferimento (router fornito dalla pagina)
+  function openNotif(id) {
+    const n = items.find(x => String(x.id) === String(id));
+    closePanel();
+    if (!n) return;
+    try {
+      if (typeof window.CameNotifRouter === "function") window.CameNotifRouter(n);
+    } catch (_) { /* navigazione non disponibile: ignora */ }
   }
 
   async function fetchItems() {
@@ -158,6 +179,47 @@
     });
   }
 
+  // Piccola animazione della campanella all'arrivo di una notifica
+  function pulseBell() {
+    if (!bellEl) return;
+    bellEl.classList.remove("ring");
+    // reflow per riavviare l'animazione anche a colpi ravvicinati
+    void bellEl.offsetWidth;
+    bellEl.classList.add("ring");
+    setTimeout(() => bellEl && bellEl.classList.remove("ring"), 1400);
+  }
+
+  // Nuova notifica ricevuta in tempo reale (senza ricaricare la pagina)
+  function onRealtimeInsert(row) {
+    if (!row || !row.id) return;
+    if (items.some(n => String(n.id) === String(row.id))) return; // già presente
+    items.unshift(row);
+    if (rootEl) rootEl.hidden = false;
+    if (panelEl && !panelEl.hidden) {
+      // il pannello è aperto: l'utente la sta vedendo -> considerala letta
+      renderList();
+      markAllRead();
+    } else {
+      renderBadge();
+      pulseBell();
+    }
+  }
+
+  function startRealtime(user) {
+    try {
+      client
+        .channel("notif_" + user.id)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "notifications", filter: "recipient_id=eq." + user.id },
+          (payload) => onRealtimeInsert(payload.new)
+        )
+        .subscribe();
+    } catch (_) {
+      // realtime non disponibile: resta il polling ogni 60s
+    }
+  }
+
   async function init() {
     const user = await getUser();
     if (!user) return; // non loggato: niente campanella
@@ -165,6 +227,7 @@
     if (!rootEl) return;
     await fetchItems();
     startPolling();
+    startRealtime(user);
   }
 
   if (document.readyState === "loading") {
