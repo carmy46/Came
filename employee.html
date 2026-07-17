@@ -203,51 +203,21 @@
             </div>
 
             <div id="archiveFiltersCard" class="filters card">
-              <!-- Su smartphone: blocco unico Apri/Chiudi (zona cerchiata) -->
-              <details class="archive-filters-toggle">
-                <summary>
-                  <span>Filtri</span>
-                  <strong id="monthPickerLabel">—</strong>
-                </summary>
-
-                <div class="archive-filters-body">
-                  <details class="month-toggle" open>
-                    <summary>
-                      <span class="muted">Mese</span>
-                      <strong id="monthPickerLabelInner">—</strong>
-                    </summary>
-                    <div style="margin-top:10px;">
-                      <input class="input" type="month" id="monthPicker" />
-                    </div>
-                  </details>
-
-                  <div class="archive-stats-inline archive-only-hours">
-                    <div class="statPill">
-                      <div class="muted">Totale mese</div>
-                      <div id="monthTotal" class="statValue">—</div>
-                    </div>
-                    <div class="statPill">
-                      <div class="muted">Totale oggi</div>
-                      <div id="todayTotal" class="statValue">—</div>
-                    </div>
-                  </div>
-
-                  <div class="archive-more">
-                    <div class="grid2 archive-actions archive-only-hours">
-                      <button id="exportXlsxBtn" class="btn small" type="button">Export Excel</button>
-                      <button id="exportPdfBtn" class="btn small" type="button">Export PDF</button>
-                    </div>
-
-                    <div class="archive-toolbar">
-                      <input id="archiveSearch" class="input" type="text" placeholder="Cerca in archivio..." />
-                      <div class="chips">
-                        <button class="chip" type="button" data-month-quick="this">Questo mese</button>
-                        <button class="chip" type="button" data-month-quick="last">Mese scorso</button>
-                      </div>
-                    </div>
-                  </div>
+              <!-- Navigatore mese: frecce per cambiare mese, tap al centro per sceglierlo -->
+              <div class="month-nav">
+                <button class="month-nav-btn" type="button" data-month-step="-1" aria-label="Mese precedente">‹</button>
+                <div class="month-nav-current">
+                  <span id="monthPickerLabel" class="month-nav-label">—</span>
+                  <span class="month-nav-cal" aria-hidden="true">📅</span>
+                  <input class="month-nav-input" type="month" id="monthPicker" aria-label="Scegli mese" />
                 </div>
-              </details>
+                <button class="month-nav-btn" type="button" data-month-step="1" aria-label="Mese successivo">›</button>
+              </div>
+
+              <div class="archive-search">
+                <span class="archive-search-ico" aria-hidden="true">🔎</span>
+                <input id="archiveSearch" class="input" type="text" placeholder="Cerca in archivio..." />
+              </div>
             </div>
           </div>
 
@@ -259,6 +229,22 @@
                   <div class="archive-section-title">Ore</div>
                   <div class="archive-section-sub muted">Riepilogo per giorno (apri/chiudi)</div>
                 </div>
+
+                <div class="archive-stats-inline">
+                  <div class="statPill">
+                    <div class="muted">Totale mese</div>
+                    <div id="monthTotal" class="statValue">—</div>
+                  </div>
+                  <div class="statPill">
+                    <div class="muted">Totale oggi</div>
+                    <div id="todayTotal" class="statValue">—</div>
+                  </div>
+                </div>
+                <div class="grid2 archive-actions">
+                  <button id="exportXlsxBtn" class="btn small" type="button">Export Excel</button>
+                  <button id="exportPdfBtn" class="btn small" type="button">Export PDF</button>
+                </div>
+
                 <div id="archiveGrouped">Caricamento...</div>
               </div>
 

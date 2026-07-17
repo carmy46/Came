@@ -934,14 +934,15 @@ function initArchiveToolbar() {
     }
   }
 
-  // Quick month chips
-  document.querySelectorAll("[data-month-quick]").forEach(btn => {
+  // Navigatore mese: frecce ‹ (precedente) e › (successivo)
+  document.querySelectorAll("[data-month-step]").forEach(btn => {
     btn.addEventListener("click", () => {
-      const k = btn.getAttribute("data-month-quick");
-      const d = new Date();
-      if (k === "last") d.setMonth(d.getMonth() - 1);
-      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      if (monthPicker) monthPicker.value = ym;
+      if (!monthPicker) return;
+      const base = monthPicker.value || getCurrentMonthISO();
+      const d = new Date(base + "-01T00:00:00");
+      d.setMonth(d.getMonth() + (Number(btn.getAttribute("data-month-step")) || 0));
+      monthPicker.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      updateMonthPickerLabel();
       loadArchive();
     });
   });

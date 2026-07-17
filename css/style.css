@@ -1403,6 +1403,79 @@ ul {
   #view-archive .archive-section{ scroll-margin-top: calc(var(--emp-header-h) + 120px); }
 }
 
+/* ============================================================= */
+/* ARCHIVIO — filtri: navigatore mese a frecce + ricerca          */
+/* ============================================================= */
+.month-nav{
+  display: grid;
+  grid-template-columns: 46px 1fr 46px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.03);
+  border-radius: 14px;
+  padding: 4px;
+}
+.month-nav-btn{
+  height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  color: var(--text);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color .12s ease, transform .08s ease;
+}
+.month-nav-btn:hover{ background: rgba(255,255,255,.10); }
+.month-nav-btn:active{ transform: scale(.94); }
+.month-nav-btn:focus-visible{ outline: none; box-shadow: 0 0 0 3px rgba(110,168,254,.25); }
+
+.month-nav-current{
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.month-nav-current:hover{ background: rgba(255,255,255,.04); }
+.month-nav-label{
+  font-weight: 800;
+  font-size: 15px;
+  text-transform: capitalize; /* "luglio 2026" -> "Luglio 2026" */
+  color: var(--text);
+}
+.month-nav-cal{ font-size: 14px; opacity: .7; }
+/* input month reale, trasparente sopra l'area centrale: al tap apre il selettore nativo */
+.month-nav-input{
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0;
+  border: 0; margin: 0; padding: 0;
+  cursor: pointer;
+}
+/* nascondi lo spinner/indicatore nativo per non "sbucare" sopra la label */
+.month-nav-input::-webkit-calendar-picker-indicator{ opacity: 0; }
+
+.archive-search{ position: relative; margin-top: 8px; }
+.archive-search-ico{
+  position: absolute;
+  left: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: .7;
+  pointer-events: none;
+}
+.archive-search .input{ padding-left: 38px; }
+
+/* Statistiche + export ora vivono in cima alla sezione Ore */
+#archive-section-hours .archive-stats-inline{ margin-top: 4px; }
+#archive-section-hours .archive-actions{ margin: 10px 0 4px; }
+
 /* ============================= */
 /* HOME cards */
 /* ============================= */
