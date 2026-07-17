@@ -1072,6 +1072,10 @@ function startEditWorkLog(rowItemEl) {
 
       if (error) {
         console.error(error);
+        if (error.code === "23505") {
+          msg("Esiste già una registrazione con queste ore per questo luogo in questa data.", "error");
+          return;
+        }
         msg("Errore salvataggio. Controlla console e RLS.", "error");
         return;
       }
@@ -2087,11 +2091,27 @@ hoursForm?.addEventListener("submit", async (e) => {
       return;
     }
 
+    // Blocca i doppioni dentro lo stesso invio: stesse ore per stesso luogo (stessa data)
+    const seenKeys = new Set();
+    for (const p of payloads) {
+      const key = `${String(p.location).trim().toLowerCase()}|${p.start_time}|${p.end_time}`;
+      if (seenKeys.has(key)) {
+        setMsg(`Hai inserito due volte le stesse ore per "${p.location}" (${p.start_time}–${p.end_time}). Togli la riga doppia.`, "error");
+        return;
+      }
+      seenKeys.add(key);
+    }
+
     const { error } = await supabaseClient.from("work_logs").insert(payloads);
 
     if (error) {
       console.error(error);
-      setMsg("Errore invio. Controlla console e RLS.", "error");
+      if (error.code === "23505") {
+        setMsg("Hai già registrato queste ore per questo luogo in questa data.", "error");
+        showToast("Ore già registrate", "error");
+      } else {
+        setMsg("Errore invio. Controlla console e RLS.", "error");
+      }
       return;
     }
 
