@@ -186,76 +186,33 @@ function refreshQtyVisual(input) {
   input.setAttribute("data-zero", String(v === 0));
 }
 
-// Somma le quantità di una categoria e aggiorna la pill "N pz" nell'intestazione
-function updateCategoryPieces(acc) {
-  if (!acc) return;
-  let sum = 0;
-  acc.querySelectorAll("[data-po-qty]").forEach((i) => { sum += Number(i.value) || 0; });
-  const pill = acc.querySelector("[data-cat-pieces]");
-  if (!pill) return;
-  if (sum > 0) { pill.textContent = `${sum} pz`; pill.hidden = false; }
-  else { pill.hidden = true; }
-}
-
-function updateCategoryPiecesFor(input) {
-  updateCategoryPieces(input?.closest?.(".product-acc"));
-}
-
-function refreshAllCategoryPieces() {
-  document.querySelectorAll(".product-acc").forEach(updateCategoryPieces);
-}
-
-// Rigenera il carrello prodotti raggruppato per categoria (sezioni pieghevoli),
-// tenendo sempre la riga "Altro" in fondo, fuori dalle categorie.
-function renderProductRows(groupedProducts) {
+// Rigenera il carrello prodotti come lista unica (senza sezioni per categoria),
+// tenendo sempre la riga "Altro" in fondo.
+function renderProductRows(productNames) {
   const cart = document.getElementById("poCart");
   if (!cart) return;
   const otherRow = cart.querySelector('.product-row[data-po-item="Altro"]');
 
-  // rimuovi tutto il contenuto precedente (categorie/righe), tranne "Altro"
+  // rimuovi tutto il contenuto precedente, tranne "Altro"
   Array.from(cart.children).forEach((child) => {
     if (child !== otherRow) child.remove();
   });
 
-  // crea le sezioni per categoria prima di "Altro"
   const frag = document.createDocumentFragment();
-  for (const group of (groupedProducts || [])) {
-    const acc = document.createElement("div");
-    acc.className = "acc product-acc";
-    acc.setAttribute("data-category", group.category);
-
-    const head = document.createElement("div");
-    head.className = "acc-head";
-    head.setAttribute("data-acc-toggle", "");
-    head.innerHTML =
-      `<div class="acc-title">${escapeHtml(group.category)}</div>
-      <div class="acc-head-right">
-        <span class="cat-pieces" data-cat-pieces hidden>0 pz</span>
-        <span class="acc-chev">▾</span>
-      </div>`;
-
-    const body = document.createElement("div");
-    body.className = "acc-body";
-    for (const name of group.names) body.appendChild(makeProductRow(name));
-
-    acc.appendChild(head);
-    acc.appendChild(body);
-    frag.appendChild(acc);
-  }
+  for (const name of (productNames || [])) frag.appendChild(makeProductRow(name));
 
   if (otherRow) cart.insertBefore(frag, otherRow);
   else cart.appendChild(frag);
 
   poApplySearch();
-  refreshAllCategoryPieces();
 }
 
-// Carica il catalogo dal DB e aggiorna liste prodotti (raggruppati per categoria)/luoghi/attività
+// Carica il catalogo dal DB e aggiorna liste prodotti/luoghi/attività
 async function loadCatalog() {
   try {
     const { data, error } = await supabaseClient
       .from("catalog_items")
-      .select("type,name,category")
+      .select("type,name")
       .eq("active", true)
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
@@ -265,29 +222,17 @@ async function loadCatalog() {
       return;
     }
 
-    const productGroups = []; // [{ category, names: [...] }], nell'ordine di comparsa
-    const groupIndexByCategory = new Map();
+    const products = [];
     const places = [];
     const activities = [];
 
     for (const it of (data || [])) {
-      if (it.type === "product") {
-        const cat = (it.category || "").trim() || "Altri prodotti";
-        let idx = groupIndexByCategory.get(cat);
-        if (idx === undefined) {
-          idx = productGroups.length;
-          groupIndexByCategory.set(cat, idx);
-          productGroups.push({ category: cat, names: [] });
-        }
-        productGroups[idx].names.push(it.name);
-      } else if (it.type === "place") {
-        places.push(it.name);
-      } else if (it.type === "activity") {
-        activities.push(it.name);
-      }
+      if (it.type === "product") products.push(it.name);
+      else if (it.type === "place") places.push(it.name);
+      else if (it.type === "activity") activities.push(it.name);
     }
 
-    renderProductRows(productGroups);
+    renderProductRows(products);
     fillDatalist("placesList", places);
     fillDatalist("activitiesList", activities);
   } catch (e) {
@@ -1298,27 +1243,11 @@ function poGetRows() {
 function poApplySearch() {
   const q = (poSearchEl?.value || "").trim().toLowerCase();
 
-  // Per ogni categoria: mostra solo i prodotti che combaciano (o tutti, se combacia
-  // il nome della categoria), nascondi la categoria se non ha risultati e, mentre
-  // si cerca, aprila automaticamente così i risultati si vedono subito.
-  document.querySelectorAll(".product-acc").forEach((acc) => {
-    const categoryMatches = !!q && String(acc.getAttribute("data-category") || "").toLowerCase().includes(q);
-    let hasVisible = false;
-
-    acc.querySelectorAll(".product-row").forEach((row) => {
-      const name = String(row.getAttribute("data-po-item") || "").toLowerCase();
-      const visible = !q || categoryMatches || name.includes(q);
-      row.style.display = visible ? "grid" : "none";
-      if (visible) hasVisible = true;
-    });
-
-    acc.style.display = hasVisible ? "" : "none";
-    acc.classList.toggle("open", !!q && hasVisible);
-  });
-
-  // "Altro" è il campo libero: resta sempre visibile, non è dentro una categoria
-  const otherRow = document.querySelector('#poCart > .product-row[data-po-item="Altro"]');
-  if (otherRow) otherRow.style.display = "grid";
+  for (const row of poGetRows()) {
+    const name = String(row.getAttribute("data-po-item") || "").toLowerCase();
+    if (name === "altro") { row.style.display = "grid"; continue; } // campo libero, sempre visibile
+    row.style.display = (!q || name.includes(q)) ? "grid" : "none";
+  }
 }
 
 function poClearQuantities() {
@@ -1327,19 +1256,16 @@ function poClearQuantities() {
     if (qtyEl) { qtyEl.value = 0; refreshQtyVisual(qtyEl); }
   }
   if (poOtherNameEl) poOtherNameEl.value = "";
-  refreshAllCategoryPieces();
 }
 
 function poFillVisibleOnes() {
   for (const row of poGetRows()) {
     if (row.style.display === "none") continue;
-    if (row.offsetParent === null) continue; // dentro una categoria chiusa: non è visibile
     const qtyEl = row.querySelector("[data-po-qty]");
     if (!qtyEl) continue;
     const v = Number(qtyEl.value || 0);
     if (!Number.isFinite(v) || v <= 0) { qtyEl.value = 1; refreshQtyVisual(qtyEl); }
   }
-  refreshAllCategoryPieces();
 }
 
 // Stepper +/− e digitazione manuale: un solo listener sul contenitore (delega)
@@ -1357,7 +1283,6 @@ function initProductStepper() {
     v = inc ? v + 1 : Math.max(0, v - 1);
     input.value = v;
     refreshQtyVisual(input);
-    updateCategoryPiecesFor(input);
     setPoMsg("");
   });
 
@@ -1366,7 +1291,6 @@ function initProductStepper() {
     if (!input) return;
     if ((Number(input.value) || 0) < 0) input.value = 0;
     refreshQtyVisual(input);
-    updateCategoryPiecesFor(input);
   });
 }
 

@@ -766,34 +766,6 @@ ul {
   overflow:auto;
 }
 
-/* Categoria come sezione pulita (niente card pesante, solo un divisore) */
-.product-acc.acc{
-  border:0;
-  background:transparent;
-  border-radius:0;
-  padding:0;
-  margin:0;
-}
-.product-acc + .product-acc{ border-top:1px solid var(--border); }
-.product-acc > .acc-head{ padding:15px 6px; }
-.product-acc .acc-title{
-  font-size:12px;
-  font-weight:800;
-  letter-spacing:.9px;
-  text-transform:uppercase;
-  color:var(--muted);
-}
-.acc-head-right{ display:flex; align-items:center; gap:10px; }
-.cat-pieces{
-  padding:2px 10px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:800;
-  color:var(--accent2, #5fc9e8);
-  background:rgba(95,201,232,.14);
-}
-.product-acc .acc-body{ margin-top:0; padding:0 0 8px; }
-
 /* Righe prodotto: tabella con separatori sottili (niente box) */
 .product-row{
   display:grid;
@@ -805,7 +777,7 @@ ul {
   padding:11px 6px;
   border-top:1px solid rgba(255,255,255,.06);
 }
-.product-acc .acc-body .product-row:first-child{ border-top:0; }
+.product-cart > .product-row:first-child{ border-top:0; }
 .product-name{
   font-weight:600;
   font-size:14.5px;
