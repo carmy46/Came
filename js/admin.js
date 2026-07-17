@@ -1907,13 +1907,26 @@ adminProdExportXlsxBtn?.addEventListener("click", () => {
   });
 
   const totalPieces = sorted.reduce((acc, g) => acc + (g.items || []).reduce((a2, it) => a2 + (Number(it.quantity) || 0), 0), 0);
-  const totalLines = sorted.reduce((acc, g) => acc + (g.items || []).length, 0);
+
+  // Quantità complessiva consumata per ogni prodotto (somma su tutti gli ordini del mese)
+  const productTotals = new Map();
+  for (const g of sorted) {
+    for (const it of (g.items || [])) {
+      const name = String(it.product_name || "").trim() || "—";
+      productTotals.set(name, (productTotals.get(name) || 0) + (Number(it.quantity) || 0));
+    }
+  }
+  const productRows = Array.from(productTotals.entries())
+    .sort(([a], [b]) => a.localeCompare(b, "it", { sensitivity: "base" }))
+    .map(([name, qty]) => ({ Voce: name, Valore: String(qty) }));
 
   const summaryRows = [
     { Voce: "Mese", Valore: monthLabel },
     { Voce: "Ordini (gruppi)", Valore: String(sorted.length) },
-    { Voce: "Righe (prodotti)", Valore: String(totalLines) },
     { Voce: "Pezzi (totale)", Valore: String(totalPieces) },
+    { Voce: "", Valore: "" },
+    { Voce: "QUANTITÀ PER PRODOTTO", Valore: "" },
+    ...productRows,
   ];
 
   exportToExcelElegant({
